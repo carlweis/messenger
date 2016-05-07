@@ -4,6 +4,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    @if(Auth::check())
+    <meta name="api-token" content="{{ Auth::user()->api_token }}">
+    @endif
 
     <title>Messenger | Real-time Chat with Socket.io, Redis Laravel &amp; Vue.js</title>
 
