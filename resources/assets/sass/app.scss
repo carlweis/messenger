@@ -1,2 +1,11 @@
+$navbar-default-bg: #3d589c;
+$navbar-default-color: #fff;
+$navbar-default-link-color: #eee;
+$navbar-default-link-hover-color: #fff;
+$navbar-default-link-active-color: #fff;
+$navbar-default-brand-color: #fff;
+$navbar-default-brand-hover-color: #fff;
+
+@import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap/variables";
 @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
 
