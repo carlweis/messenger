@@ -18,6 +18,6 @@ class ProfileController extends Controller
 		if ($user) {
 			return view('users.profile', compact('user'));
 		}
-		return redirect('/');
+		return view('dashboard');
     }
 }
