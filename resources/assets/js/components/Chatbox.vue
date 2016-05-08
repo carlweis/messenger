@@ -40,7 +40,7 @@
 </template>
 
 <script>
-	let socket = io('http://104.236.209.31:3000');
+	let socket = io('http://10.132.25.113:3000');
 	export default {
 		props: {
 			conversation: {
