@@ -12,6 +12,7 @@ redis.on('message', function(channel, message) {
 });
 
 io.on('connection', function(socket) {
+	console.log('new client connection');
 	// io.emit('chat.message', 'User joined the chat');
 
 	// message sent
@@ -23,6 +24,7 @@ io.on('connection', function(socket) {
 	// client disconnected
 	socket.on('disconnect', function() {
 		// io.emit('chat.message', 'User has disconnected');
+		console.log('client disconnected');
 	});
 });
 server.listen(3000);
