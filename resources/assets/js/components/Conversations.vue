@@ -50,7 +50,8 @@ export default {
 	},
 	data() {
 		return {
-			active: false
+			active: false,
+			apiToken: $('meta[name="api-token"]').attr('content')
 		};
 	},
 	ready() {
@@ -63,9 +64,23 @@ export default {
 	},
 	methods: {
 		toggleActive(conversation) {
-			conversation.active = ! conversation.active;
-			this.$dispatch('activateConversation', conversation);
-			this.active = !this.active;
+			// reload the conversation and it's messages
+			this.$http.get('/api/v1/conversations/' + conversation.id, {
+				api_token: this.apiToken
+			}).then(function(response) {
+				conversation = response.data;
+				conversation.active = ! conversation.active;
+				this.$dispatch('activateConversation', conversation);
+				this.active = !this.active;
+
+				// scroll message into view
+				setTimeout(function() {
+					document.querySelector('.Chatbox__content').scrollTop = 10000000;
+				}, 50);
+			}, function(response){
+				// error callback
+				console.log('Failed to reload conversation', conversation);
+			});
 		}
 	}
 }
@@ -75,7 +90,7 @@ export default {
 	.Conversations {
 		position: fixed;
 		right: 0;
-		top: 61px;
+		top: 58px;
 		z-index: 0;
 		height: 100%;
 		min-height: 100%;

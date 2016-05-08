@@ -34,7 +34,7 @@
 
                 <!-- Branding Image -->
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    rumorslist
+                    Messenger
                 </a>
             </div>
 
@@ -73,18 +73,21 @@
 
     @if(Auth::check())
     <!-- conversations -->
-    <conversations :show.sync="showConversations" :conversations.sync="conversations" :user.sync="user"></conversations>
-
-    <!-- chat boxes -->
-
-    <chatbox v-if="activeConversation" :conversation.sync="activeConversation" :show.sync="showChatbox" :user.sync="user">
-        <slot id="title">@{{activeConversation.recipient !== undefined ? activeConversation.recipient.name : ''}}</slot>
+    <conversations :show.sync="showConversations"
+                   :conversations.sync="conversations"
+                   :user.sync="user">
+   </conversations>
+    <!-- chat box -->
+    <chatbox v-if="activeConversation"
+             :conversation.sync="activeConversation"
+             :show.sync="showChatbox" :user.sync="user">
     </chatbox>
     @endif
 
     <!-- JavaScripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js" integrity="sha384-I6F5OKECLVtK/BL+8iSLDEHowSAfUo76ZL9+kGAgTRdiByINKJaqTPH/QVNS1VDb" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.6/socket.io.js"></script>
 
     <script src="/js/app.js"></script>
 </body>

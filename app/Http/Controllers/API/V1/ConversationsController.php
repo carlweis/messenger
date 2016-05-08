@@ -30,6 +30,15 @@ class ConversationsController extends Controller
 		);
 	}
 
+	public function show(Request $request, $id)
+	{
+		return response()->json(
+			Conversation::with(['messages.user', 'sender', 'recipient'])->where([
+				['id', '=', $id]
+			])->first()
+		);
+	}
+
     public function store(Request $request)
     {
     	$data = $request->input();

@@ -2,7 +2,8 @@
 	<div class="Chatbox" transition="chatbox" v-show="show">
 		<header>
 			<div class="title">
-				<i class="fa fa-circle"></i> <slot id="title"></slot>
+				<i class="fa fa-circle"></i>
+				{{ title }}
 			</div>
 			<nav>
 				<ul>
@@ -33,12 +34,13 @@
 			</li>
 		</div>
 		<div class="Chatbox__input">
-			<textarea v-model="message" @keyup.enter="send" placeholder="Enter a message"></textarea>
+			<textarea v-model="message" @keyup.enter="send" placeholder="Enter a message..." autofocus="true"></textarea>
 		</div>
 	</div>
 </template>
 
 <script>
+	let socket = io('http://192.168.10.10:3000');
 	export default {
 		props: {
 			conversation: {
@@ -56,7 +58,21 @@
 			return {
 				message: '',
 				apiToken: $('meta[name="api-token"]').attr('content'),
+				// title: 'test'
 			};
+		},
+		computed: {
+			title() {
+				if (this.conversation.sender !== undefined &&
+					this.conversation.recipient !== undefined) {
+					if (this.conversation.sender_id === this.user.id) {
+						return this.conversation.recipient.name;
+					} else {
+						return this.conversation.sender.name;
+					}
+				}
+				return '';
+			}
 		},
 		methods: {
 			send() {
@@ -66,24 +82,19 @@
 					conversation_id: this.conversation.id,
 					body: this.message
 				}).then(function(response) {
-					// message sent
-					console.log('Message Sent', response);
-					// update the conversation
+					// push the message to the parent
 					this.$dispatch('messageSent', response.data.message);
+
+					// emit the message to the chatserver
+					socket.emit('chat.message', response.data.message);
 
 					// clear the message input
 					this.message = '';
 
-					// scroll into view
+					// scroll message into view
 					setTimeout(function() {
 						document.querySelector('.Chatbox__content').scrollTop = 10000000;
 					}, 50);
-
-					// play sms audio fx
-					let audio = document.createElement('audio');
-					audio.setAttribute('src', '/audio/sms.mp3');
-					audio.play();
-					audio = null;
 
 				},function(response) {
 					// error callback

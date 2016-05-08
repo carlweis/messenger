@@ -15931,6 +15931,13 @@ var _Chatbox2 = _interopRequireDefault(_Chatbox);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var socket = io('http://192.168.10.10:3000');
+
+// import mixins
+
+// import components
+
+
 // vue transitons
 _vue2.default.transition('user-row', {
 	enterClass: 'slideInUp',
@@ -15938,11 +15945,6 @@ _vue2.default.transition('user-row', {
 });
 
 // vue filters
-
-
-// import mixins
-
-// import components
 _vue2.default.filter('timeago', function (value, input) {
 	console.log(value);
 	var timeago = new Date(value);
@@ -15971,6 +15973,24 @@ new _vue2.default({
 	},
 
 	ready: function ready() {
+		// socket setup
+		socket.on('chat.message', function (message) {
+			// add the message if it matches the active conversation_id
+			if (this.activeConversation.id === message.conversation_id) {
+				// play sms audio fx
+				var audio = document.createElement('audio');
+				audio.setAttribute('src', '/audio/sms.mp3');
+				audio.play();
+				audio = null;
+
+				this.activeConversation.messages.push(message);
+				// scroll message into view
+				setTimeout(function () {
+					document.querySelector('.Chatbox__content').scrollTop = 10000000;
+				}, 50);
+			}
+		}.bind(this));
+
 		this.$http.get('/api/v1/users', { api_token: this.apiToken }).then(function (response) {
 			// set the users array
 			this.users = response.data;
@@ -15993,8 +16013,11 @@ new _vue2.default({
 		messageSent: function messageSent(message) {
 			if (message) {
 				console.log('message received', message);
-				this.activeConversation.messages.push(message);
-				console.log('Message added', this.activeConversation.messages);
+				// this.activeConversation.messages.push(message);
+				// scroll message into view
+				setTimeout(function () {
+					document.querySelector('.Chatbox__content').scrollTop = 10000000;
+				}, 50);
 			}
 		},
 		newConversation: function newConversation(conversation) {
@@ -16005,11 +16028,20 @@ new _vue2.default({
 		},
 		activateConversation: function activateConversation(conversation) {
 			if (conversation) {
+				this.activateConversation(conversation);
+			}
+		}
+	},
+	methods: {
+		activateConversation: function activateConversation(conversation) {
+			// reload the conversation and it's messages
+			this.$http.get('/api/v1/conversations/' + conversation.id, {
+				api_token: this.apiToken
+			}).then(function (response) {
+				conversation = response.data;
 				conversation.active = true;
 				this.activeConversation = conversation;
 				this.showChatbox = true;
-
-				// toggle minimize
 
 				// maximize chatbox
 				document.querySelector('.Chatbox').classList.add('maximize');
@@ -16018,10 +16050,35 @@ new _vue2.default({
 				// show the Chatbox__content and Chatbox__input
 				document.querySelector('.Chatbox__content').setAttribute('style', 'display:block');
 				document.querySelector('.Chatbox__input').setAttribute('style', 'display:block');
-			}
-		}
-	},
-	methods: {
+
+				// scroll message into view
+				setTimeout(function () {
+					document.querySelector('.Chatbox__content').scrollTop = 10000000;
+				}, 50);
+			}, function (response) {
+				// error callback
+				console.log('Failed to reload conversation', conversation);
+			});
+		},
+		startConversation: function startConversation(sid, rid) {
+			// create a new conversation
+			this.$http.post('/api/v1/conversations', {
+				api_token: this.apiToken, sender_id: sid, recipient_id: rid
+			}).then(function (response) {
+				// log the conversation id
+				console.log('conversation: ', response.data.conversation);
+
+				// broadcast new conversation - causes a duplication bug...not needed in parent?
+				// this.$dispatch('newConversation', response.data.conversation);
+
+				// create a new chat window
+				this.activeConversation = response.data.conversation;
+				this.activateConversation(this.activeConversation);
+			}, function (response) {
+				// error callback
+				console.log(response);
+			});
+		},
 		loadConversations: function loadConversations() {
 			this.$http.get('/api/v1/conversations', { api_token: this.apiToken }).then(function (response) {
 				// add the conversations
@@ -16047,6 +16104,9 @@ var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Chatbox {\n\t\t
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+
+
+var socket = io('http://192.168.10.10:3000');
 exports.default = {
 	props: {
 		conversation: {
@@ -16066,7 +16126,20 @@ exports.default = {
 			apiToken: $('meta[name="api-token"]').attr('content')
 		};
 	},
+	// title: 'test'
 
+	computed: {
+		title: function title() {
+			if (this.conversation.sender !== undefined && this.conversation.recipient !== undefined) {
+				if (this.conversation.sender_id === this.user.id) {
+					return this.conversation.recipient.name;
+				} else {
+					return this.conversation.sender.name;
+				}
+			}
+			return '';
+		}
+	},
 	methods: {
 		send: function send() {
 			this.$http.post('/api/v1/messages', {
@@ -16075,24 +16148,19 @@ exports.default = {
 				conversation_id: this.conversation.id,
 				body: this.message
 			}).then(function (response) {
-				// message sent
-				console.log('Message Sent', response);
-				// update the conversation
+				// push the message to the parent
 				this.$dispatch('messageSent', response.data.message);
+
+				// emit the message to the chatserver
+				socket.emit('chat.message', response.data.message);
 
 				// clear the message input
 				this.message = '';
 
-				// scroll into view
+				// scroll message into view
 				setTimeout(function () {
 					document.querySelector('.Chatbox__content').scrollTop = 10000000;
 				}, 50);
-
-				// play sms audio fx
-				var audio = document.createElement('audio');
-				audio.setAttribute('src', '/audio/sms.mp3');
-				audio.play();
-				audio = null;
 			}, function (response) {
 				// error callback
 				console.log('Failed to send message', response);
@@ -16145,7 +16213,7 @@ exports.default = {
 	}
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Chatbox\" transition=\"chatbox\" v-show=\"show\">\n\t<header>\n\t\t<div class=\"title\">\n\t\t\t<i class=\"fa fa-circle\"></i> <slot id=\"title\"></slot>\n\t\t</div>\n\t\t<nav>\n\t\t\t<ul>\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"minimize\"><i class=\"fa fa-minus\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t\t<!-- <li>\n\t\t\t\t\t<a @click=\"maximize\"><i class=\"fa fa-square-o\">&nbsp;</i></a>\n\t\t\t\t</li> -->\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"close\"><i class=\"fa fa-close\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</nav>\n\t</header>\n\t<div class=\"Chatbox__content\">\n\t\t<li v-for=\"message in conversation.messages\" track-by=\"$index\" v-bind:class=\"message.user.id === user.id ? 'self' : 'other'\">\n\t\t  <div class=\"avatar\">\n\t\t    <img v-bind:src=\"message.user.avatar\">\n\t\t  </div>\n\t\t  <div class=\"chatboxmessagecontent\">\n\t\t    <p>{{ message.body }}</p>\n\t\t    <time datetime=\"2016-05-07 03:11:31 UTC\" title=\"07 May  2016 at 03:11AM\">\n\t\t      {{ message.user.name }} • {{ message.created_at }}\n\t\t    </time>\n\t\t  </div>\n\n\t\t</li>\n\t</div>\n\t<div class=\"Chatbox__input\">\n\t\t<textarea v-model=\"message\" @keyup.enter=\"send\" placeholder=\"Enter a message\"></textarea>\n\t</div>\n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Chatbox\" transition=\"chatbox\" v-show=\"show\">\n\t<header>\n\t\t<div class=\"title\">\n\t\t\t<i class=\"fa fa-circle\"></i>\n\t\t\t{{ title }}\n\t\t</div>\n\t\t<nav>\n\t\t\t<ul>\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"minimize\"><i class=\"fa fa-minus\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t\t<!-- <li>\n\t\t\t\t\t<a @click=\"maximize\"><i class=\"fa fa-square-o\">&nbsp;</i></a>\n\t\t\t\t</li> -->\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"close\"><i class=\"fa fa-close\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</nav>\n\t</header>\n\t<div class=\"Chatbox__content\">\n\t\t<li v-for=\"message in conversation.messages\" track-by=\"$index\" v-bind:class=\"message.user.id === user.id ? 'self' : 'other'\">\n\t\t  <div class=\"avatar\">\n\t\t    <img v-bind:src=\"message.user.avatar\">\n\t\t  </div>\n\t\t  <div class=\"chatboxmessagecontent\">\n\t\t    <p>{{ message.body }}</p>\n\t\t    <time datetime=\"2016-05-07 03:11:31 UTC\" title=\"07 May  2016 at 03:11AM\">\n\t\t      {{ message.user.name }} • {{ message.created_at }}\n\t\t    </time>\n\t\t  </div>\n\n\t\t</li>\n\t</div>\n\t<div class=\"Chatbox__input\">\n\t\t<textarea v-model=\"message\" @keyup.enter=\"send\" placeholder=\"Enter a message...\" autofocus=\"true\"></textarea>\n\t</div>\n</div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
@@ -16162,7 +16230,7 @@ if (module.hot) {(function () {  module.hot.accept()
   }
 })()}
 },{"vue":28,"vue-hot-reload-api":3,"vueify-insert-css":29}],32:[function(require,module,exports){
-var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 61px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #fff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 235px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t    border-left: solid 1px #ccc;\n\t}\n\n\t.Conversations header {\n\t\tbackground: #273a6e;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #ddd;\n\t\tcursor: pointer;\n\t}\n\t.Conversations ul.list li:hover {\n\t\tbackground: rgba(214, 213, 213, 0.67);\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t}\n\n\t.Conversations ul li span {\n\t\tposition: absolute;\n\t\tright: 1em;\n\t\ttop: 1em;\n\t\tfont-size: smaller;\n\t}\n\t.Conversations ul li span i {\n\t\tcolor: #5cb85c;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n")
+var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 58px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #fff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 235px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t    border-left: solid 1px #ccc;\n\t}\n\n\t.Conversations header {\n\t\tbackground: #273a6e;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #ddd;\n\t\tcursor: pointer;\n\t}\n\t.Conversations ul.list li:hover {\n\t\tbackground: rgba(214, 213, 213, 0.67);\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t}\n\n\t.Conversations ul li span {\n\t\tposition: absolute;\n\t\tright: 1em;\n\t\ttop: 1em;\n\t\tfont-size: smaller;\n\t}\n\t.Conversations ul li span i {\n\t\tcolor: #5cb85c;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n")
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16185,7 +16253,8 @@ exports.default = {
 	},
 	data: function data() {
 		return {
-			active: false
+			active: false,
+			apiToken: $('meta[name="api-token"]').attr('content')
 		};
 	},
 	ready: function ready() {},
@@ -16197,9 +16266,23 @@ exports.default = {
 	},
 	methods: {
 		toggleActive: function toggleActive(conversation) {
-			conversation.active = !conversation.active;
-			this.$dispatch('activateConversation', conversation);
-			this.active = !this.active;
+			// reload the conversation and it's messages
+			this.$http.get('/api/v1/conversations/' + conversation.id, {
+				api_token: this.apiToken
+			}).then(function (response) {
+				conversation = response.data;
+				conversation.active = !conversation.active;
+				this.$dispatch('activateConversation', conversation);
+				this.active = !this.active;
+
+				// scroll message into view
+				setTimeout(function () {
+					document.querySelector('.Chatbox__content').scrollTop = 10000000;
+				}, 50);
+			}, function (response) {
+				// error callback
+				console.log('Failed to reload conversation', conversation);
+			});
 		}
 	}
 };
@@ -16211,7 +16294,7 @@ if (module.hot) {(function () {  module.hot.accept()
   if (!hotAPI.compatible) return
   var id = "/Users/carl/Code/messenger/resources/assets/js/components/Conversations.vue"
   module.hot.dispose(function () {
-    require("vueify-insert-css").cache["\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 61px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #fff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 235px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t    border-left: solid 1px #ccc;\n\t}\n\n\t.Conversations header {\n\t\tbackground: #273a6e;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #ddd;\n\t\tcursor: pointer;\n\t}\n\t.Conversations ul.list li:hover {\n\t\tbackground: rgba(214, 213, 213, 0.67);\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t}\n\n\t.Conversations ul li span {\n\t\tposition: absolute;\n\t\tright: 1em;\n\t\ttop: 1em;\n\t\tfont-size: smaller;\n\t}\n\t.Conversations ul li span i {\n\t\tcolor: #5cb85c;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n"] = false
+    require("vueify-insert-css").cache["\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 58px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #fff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 235px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t    border-left: solid 1px #ccc;\n\t}\n\n\t.Conversations header {\n\t\tbackground: #273a6e;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #ddd;\n\t\tcursor: pointer;\n\t}\n\t.Conversations ul.list li:hover {\n\t\tbackground: rgba(214, 213, 213, 0.67);\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t}\n\n\t.Conversations ul li span {\n\t\tposition: absolute;\n\t\tright: 1em;\n\t\ttop: 1em;\n\t\tfont-size: smaller;\n\t}\n\t.Conversations ul li span i {\n\t\tcolor: #5cb85c;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n"] = false
     document.head.removeChild(__vueify_style__)
   })
   if (!module.hot.data) {
