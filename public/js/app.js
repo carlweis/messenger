@@ -15931,7 +15931,7 @@ var _Chatbox2 = _interopRequireDefault(_Chatbox);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var socket = io('http://10.132.25.113:3000');
+var socket = io('http://127.0.0.1:3000');
 
 // import mixins
 
@@ -16111,7 +16111,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 
-var socket = io('http://10.132.25.113:3000');
+var socket = io('http://127.0.0.1:3000');
 exports.default = {
 	props: {
 		conversation: {
