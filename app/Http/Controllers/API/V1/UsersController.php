@@ -15,7 +15,7 @@ class UsersController extends Controller
     {
     	return response()->json(
     		User::where([
-                    ['id', '=', Auth::guard('api')->id()]
+                    ['id', '!=', Auth::guard('api')->id()]
                 ])->get()
 		);
     }
