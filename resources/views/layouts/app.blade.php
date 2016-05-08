@@ -34,14 +34,17 @@
 
                 <!-- Branding Image -->
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    Messenger
+                    rumorslist
                 </a>
             </div>
 
             <div class="collapse navbar-collapse" id="app-navbar-collapse">
                 <!-- Left Side Of Navbar -->
                 <ul class="nav navbar-nav">
-                    <li><a href="{{ url('/home') }}">Home</a></li>
+                    @if (Auth::guest())
+                    @else
+                    <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                    @endif
                 </ul>
 
                 <!-- Right Side Of Navbar -->
@@ -53,12 +56,13 @@
                     @else
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                {{ Auth::user()->name }} <span class="caret"></span>
+                                <img class="user-avatar" src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"/> {{ Auth::user()->name }} <span class="caret"></span>
                             </a>
                             <ul class="dropdown-menu" role="menu">
                                 <li><a href="{{ url('/logout') }}">Sign Out</a></li>
                             </ul>
                         </li>
+                        <li><a @click="toggleConversations"><i class="fa fa-comments">&nbsp;</i></a></li>
                     @endif
                 </ul>
             </div>
@@ -66,6 +70,17 @@
     </nav>
 
     @yield('content')
+
+    @if(Auth::check())
+    <!-- conversations -->
+    <conversations :show.sync="showConversations" :conversations.sync="conversations" :user.sync="user"></conversations>
+
+    <!-- chat boxes -->
+
+    <chatbox v-if="activeConversation" :conversation.sync="activeConversation" :show.sync="showChatbox" :user.sync="user">
+        <slot id="title">@{{activeConversation.recipient !== undefined ? activeConversation.recipient.name : ''}}</slot>
+    </chatbox>
+    @endif
 
     <!-- JavaScripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js" integrity="sha384-I6F5OKECLVtK/BL+8iSLDEHowSAfUo76ZL9+kGAgTRdiByINKJaqTPH/QVNS1VDb" crossorigin="anonymous"></script>

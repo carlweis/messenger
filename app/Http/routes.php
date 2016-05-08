@@ -8,7 +8,7 @@ Route::get('/', function () {
 Route::auth();
 
 Route::group(['middleware' => ['web']], function() {
-	Route::get('/home', 'HomeController@index');
+	Route::get('/dashboard', ['uses' => 'DashboardController@index', 'as' => 'dashboard']);
 });
 
 Route::group([
@@ -26,5 +26,8 @@ Route::group([
 	Route::get('conversations', 'ConversationsController@index');
 	Route::post('conversations', 'ConversationsController@store');
 
+	// messages api routes
+	Route::get('messages', 'MessagesController@index');
+	Route::post('messages', 'MessagesController@store');
 });
 

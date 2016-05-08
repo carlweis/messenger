@@ -1,5 +1,7 @@
-$navbar-default-bg: #3d589c;
-$navbar-default-color: #fff;
+$brand-primary: #3b5998;
+$navbar-default-bg: #252525;
+$navbar-height: 60px;
+$navbar-default-color: #252525;
 $navbar-default-link-color: #eee;
 $navbar-default-link-hover-color: #fff;
 $navbar-default-link-active-color: #fff;
@@ -9,4 +11,31 @@ $navbar-default-brand-hover-color: #fff;
 @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap/variables";
 @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
 @import "animate";
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800);
 
+html, body {
+	font-family: 'Open Sans', 'Helvetica', 'Arial', sans-serif;
+}
+
+.navbar-brand {
+	font-weight: bold;
+	text-transform: lowercase;
+
+}
+
+.navbar-default {
+    // background-image: url('../img/navbar.png');
+    box-shadow: 0 2px 2px -2px rgba(0, 0, 0, .82);
+    color: #252525;
+    max-height: 60px;
+}
+
+.fa.fa-comments {
+	cursor: pointer;
+}
+.user-avatar {
+	width: 25px;
+	height: 25px;
+	border-radius: 50%;
+	margin-right: 1em;
+}

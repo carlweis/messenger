@@ -12,7 +12,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'api_token'
+        'name', 'email', 'password', 'api_token', 'avatar'
     ];
 
     /**
@@ -24,8 +24,19 @@ class User extends Authenticatable
         'password', 'remember_token', 'api_key'
     ];
 
+    public function sentConversations()
+    {
+        return $this->hasMany(Conversation::class, 'sender_id', 'id');
+    }
+
+    public function receivedConversations()
+    {
+        return $this->hasMany(Conversation::class, 'recipient_id', 'id');
+    }
+
     public function conversations()
     {
-        return $this->hasMany(Conversation::class, 'id', 'sender_id');
+        return $this->receivedConversations();
+        // return $this->hasMany(Conversation::class, 'id', 'sender_id');
     }
 }

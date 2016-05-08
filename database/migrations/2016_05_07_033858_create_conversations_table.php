@@ -18,6 +18,7 @@ class CreateConversationsTable extends Migration
             $table->foreign('sender_id')->references('id')->on('users');
             $table->integer('recipient_id')->unsigned()->index();
             $table->foreign('recipient_id')->references('id')->on('users');
+            $table->boolean('active')->default(false);
             $table->boolean('blocked')->default(false);
             $table->boolean('archived')->default(false);
             $table->boolean('favorite')->default(false);

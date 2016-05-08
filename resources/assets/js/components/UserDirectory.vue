@@ -4,6 +4,9 @@
 	<table class="table table-striped">
 		<tbody>
 			<tr v-for="member in users" transition="user-row" class="animated">
+				<td>
+					<img class="user-avatar" v-bind:src="member.avatar" alt="{{ member.name }}"/>
+				</td>
 				<td>{{ member.id }}</td>
 				<td>{{ member.name }}</td>
 				<td>{{ member.email }}</td>
@@ -21,27 +24,24 @@
 
 <script>
 export default {
+	props: {
+		users: {
+			required: true,
+			twoWay: true
+		},
+
+		user: {
+			required: true,
+			twoWay: true
+		}
+	},
 	data() {
 		return {
-			user: {},
-			users: [],
-			apiToken: $('meta[name="api-token"]').attr('content')
+			apiToken: $('meta[name="api-token"]').attr('content'),
 		};
 	},
 	ready() {
-		this.$http.get('/api/v1/users', {api_token: this.apiToken}).then(function(response) {
-			// set the users array
-			this.users = response.data;
 
-			// set the currently authenticated user
-			this.user = this.users.filter(function(user) {
-				return user.api_token == this.apiToken;
-			}.bind(this))[0];
-
-		}, function(response) {
-			// error callback
-			console.log(response);
-		});
 	},
 	methods: {
 		startConversation(sid, rid) {
@@ -50,7 +50,11 @@ export default {
 				api_token: this.apiToken, sender_id: sid, recipient_id: rid
 			}).then(function(response) {
 				// log the conversation id
-				console.log('conversation: ' , response.data.conversation_id);
+				console.log('conversation: ' , response.data.conversation);
+
+				// broadcast new conversation
+				this.$dispatch('newConversation', response.data.conversation);
+
 				// create a new chat window
 
 			}, function(response) {
