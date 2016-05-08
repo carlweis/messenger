@@ -14,9 +14,7 @@ class UsersController extends Controller
     public function index()
     {
     	return response()->json(
-    		User::where([
-                    ['id', '!=', Auth::guard('api')->id()]
-                ])->get()
+    		User::all()
 		);
     }
 

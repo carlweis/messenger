@@ -69,8 +69,13 @@ new Vue({
 
 			// set the currently authenticated user
 			this.user = this.users.filter(function(user) {
-				return user.api_token == this.apiToken;
+				return user.api_token === this.apiToken;
 			}.bind(this))[0];
+
+			// remove user from users
+			this.users = this.users.filter(function(user) {
+				return user.api_token !== this.apiToken;
+			}.bind(this));
 
 			// load the users conversations
 			this.loadConversations();
