@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Moment from 'moment';
 
-let socket = io('http://192.168.10.10:3000');
+let socket = io('http://localhost:3000');
 
 // import mixins
 
