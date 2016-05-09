@@ -26,7 +26,7 @@ class ConversationsController extends Controller
 				['sender_id', '=', Auth::guard('api')->id()]
 			])->orWhere([
 				['recipient_id', '=', Auth::guard('api')->id()]
-			])->get()
+			])->orderBy('created_at', 'desc')->get()
 		);
 	}
 
@@ -57,7 +57,7 @@ class ConversationsController extends Controller
 			// if not create a new conversation and return it's id
 	    	$conversation = Conversation::create([
 	    		'sender_id' => $data['sender_id'],
-	    		'recipient_id' => $data['recipient_id']
+	    		'recipient_id' => $data['recipient_id'],
 			]);
 		}
     	return response()->json([

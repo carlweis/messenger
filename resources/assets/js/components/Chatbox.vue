@@ -1,5 +1,5 @@
 <template>
-	<div class="Chatbox" transition="chatbox" v-show="show">
+	<div class="Chatbox effect8" transition="chatbox" v-show="show">
 		<header>
 			<div class="title">
 				<i class="fa fa-circle"></i>
@@ -26,8 +26,8 @@
 			  </div>
 			  <div class="chatboxmessagecontent">
 			    <p>{{ message.body }}</p>
-			    <time datetime="2016-05-07 03:11:31 UTC" title="07 May  2016 at 03:11AM">
-			      {{ message.user.name }} • {{ message.created_at }}
+			    <time datetime="{{ message.created_at }}" title="{{ message.created_at }}">
+			      {{ message.user.name }} • {{ message.created_at | timeago }}
 			    </time>
 			  </div>
 
@@ -40,11 +40,13 @@
 </template>
 
 <script>
+	// let socket = io('http://192.168.10.10:3000');
 	let socket = io('http://codedevise.com:3000');
 	export default {
 		props: {
 			conversation: {
-				required: true
+				required: true,
+				twoWay: true
 			},
 			show: {
 				 type: Boolean,
@@ -52,13 +54,15 @@
 				 twoWay: true,
 				 default: true
 			},
-			user: {}
+			user: {
+				require: true,
+				twoWay: true
+			}
 		},
 		data() {
 			return {
 				message: '',
 				apiToken: $('meta[name="api-token"]').attr('content'),
-				// title: 'test'
 			};
 		},
 		computed: {
@@ -75,31 +79,39 @@
 			}
 		},
 		methods: {
-			send() {
-				this.$http.post('/api/v1/messages', {
-					api_token: this.apiToken,
-					user_id: this.user.id,
-					conversation_id: this.conversation.id,
-					body: this.message
-				}).then(function(response) {
-					// push the message to the parent
-					this.$dispatch('messageSent', response.data.message);
+			send(e) {
 
-					// emit the message to the chatserver
-					socket.emit('chat.message', response.data.message);
+				console.log('send event', e);
+				if (this.message.trim().length > 0 && !e.shiftKey) {
 
-					// clear the message input
-					this.message = '';
+					// replace newline in message with <br>
+					this.message = this.message.replace(/[\r\n]/g, "\n");
 
-					// scroll message into view
-					setTimeout(function() {
-						document.querySelector('.Chatbox__content').scrollTop = 10000000;
-					}, 50);
+					this.$http.post('/api/v1/messages', {
+						api_token: this.apiToken,
+						user_id: this.user.id,
+						conversation_id: this.conversation.id,
+						body: this.message
+					}).then(function(response) {
+						// push the message to the parent
+						this.$dispatch('messageSent', {message: response.data.message, conversation: this.conversation});
 
-				},function(response) {
-					// error callback
-					console.log('Failed to send message', response);
-				}.bind(this));
+						// emit the message to the chatserver
+						socket.emit('chat.message', response.data.message);
+
+						// clear the message input
+						this.message = '';
+
+						// scroll message into view
+						setTimeout(function() {
+							document.querySelector('.Chatbox__content').scrollTop = 10000000;
+						}, 50);
+
+					},function(response) {
+						// error callback
+						console.log('Failed to send message', response);
+					}.bind(this));
+				}
 			},
 			maximize() {
 				// maximize chatbox
@@ -155,7 +167,7 @@
 		bottom: 0;
 		margin-left: 1em;
 		width: 280px;
-		right: 250px;
+		right: 275px;
 
 		/* animated */
 		-webkit-animation-duration: 0.5s;
@@ -163,7 +175,11 @@
 	    -webkit-animation-fill-mode: both;
 	    animation-fill-mode: both;
 
+		border: 1px solid rgba(29, 49, 91, .3);
+		border-radius: 3px 3px 0 0;
+    	/*box-shadow: 0 1px 1px rgba(0, 0, 0, .3);*/
 	}
+
 	.Chatbox__expanded {
 		-webkit-transition: all .5s ease-in-out;
 		transition: all .5s ease-in-out;
@@ -184,14 +200,15 @@
 		right: 1000px !important;
 	}
 	.Chatbox header {
-		background: #4c4c4c;
+	    background-color: #436790;
 	    color: white;
 	    padding: 0.5rem;
 	    overflow: hidden;
-	    border-right: 1px solid rgba(85, 85, 85, 0.87);
-	    border-left: 1px solid rgba(85, 85, 85, 0.87);
-
+	    border-top: 1px solid rgb(62, 94, 131);
+	    border-right: 1px solid rgb(62, 94, 131);
+	    border-left: 1px solid rgb(62, 94, 131);
 	}
+
 	.Chatbox header nav  {
 		position: absolute;
 		right: 0.5em;
@@ -224,13 +241,10 @@
 	    /*height: 280px;
 	    width: 280px;*/
 	    height: 280px;
-	    width: 280px;
+	    width: 100%;
 	    overflow-y: auto;
 	    padding: 7px;
-	    border-left: 1px solid #cccccc;
-	    border-right: 1px solid #cccccc;
-	    border-bottom: 1px solid #eeeeee;
-	    background: #e5e5e5;
+	    background: #edf0f3;
 	    line-height: 1.3em;
 	    list-style: none;
 	}
@@ -294,7 +308,7 @@
 	    background: white;
 	    padding: 10px;
 	    border-radius: 2px;
-	    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/
 	}
 
 	.chatboxmessagecontent p {
@@ -318,23 +332,23 @@
 	.Chatbox__input {
     padding: 5px;
     background-color: #ffffff;
-    border-left: 1px solid #cccccc;
-    border-right: 1px solid #cccccc;
-    border-bottom: 1px solid #cccccc;
+    border-top: 1px solid #cccccc;
+    /*border-left: 1px solid #cccccc;
+
+    border-bottom: 1px solid #cccccc;*/
 }
 
 .Chatbox__input textarea {
     width: 262px;
-    height: 44px;
+    height: 28px;
     padding: 3px 0pt 3px 3px;
-    border: 1px solid #eeeeee;
-    margin: 1px;
+    border: none;
     overflow: hidden;
     resize: none !important;
 }
 
 .Chatbox__input textarea:focus {
-    border: solid 1px #eee;
+    border: none;
     margin: 0;
     outline: none;
 }

@@ -25,7 +25,7 @@ class MessagesController extends Controller
 			Message::with(['user', 'conversation'])
 				->where([
 					['user_id', '=', Auth::guard('api')->id()]
-				])->get()
+				])->orderBy('created_at', 'desc')->get()
 		);
 	}
 
@@ -35,7 +35,7 @@ class MessagesController extends Controller
     	$this->validate($request, [
     		'user_id' => 'required|numeric',
     		'conversation_id' => 'required|numeric',
-    		'body' => 'required'
+    		'body' => 'required',
 		]);
 
     	// get the request data

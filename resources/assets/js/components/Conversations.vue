@@ -1,8 +1,9 @@
 <template>
 	<div class="Conversations" v-show="show" transition="conversations">
-		<!-- <header>
+		<header>
 			<div>
-				Conversations
+				<i class="messages-icon"></i>
+				<span class="conversations-title">Messages</span>
 				<nav>
 					<ul>
 						<li><i @click="show = false" class="fa fa-close">&nbsp;</i></li>
@@ -10,20 +11,34 @@
 				</nav>
 			</div>
 
-		</header> -->
+		</header>
 		<ul class="list">
-			<li v-for="conversation in conversations" @click="toggleActive(conversation)" class="{{ isSelected ? 'active' : '' }}">
+			<li v-for="conversation in conversations" @click="toggleActive(conversation)" class="{{ isActive(conversation) ? 'active' : '' }}">
 				<div v-if="conversation.sender_id === user.id">
 					<img v-bind:src="conversation.recipient.avatar" alt="{{ conversation.recipient.name }}"/>
-					{{ conversation.recipient.name }}
-					<span class="status">
+					<span class="conversation-content">
+						<span class="conversation-name">{{ conversation.recipient.name }}</span><br>
+						<span class="conversation-last-message">{{ lastMessage(conversation) }}</span>
+					</span>
+					<span v-if="conversation.messages.length > 0" class="last-message-timestamp">
+					{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}
+					</span>
+					<span v-else><br></span>
+
+					<span v-if="conversation.newMessage" class="status">
 						<i class="fa fa-circle">&nbsp;</i>
 					</span>
 				</div>
 				<div v-else>
 					<img v-bind:src="conversation.sender.avatar" alt="{{ conversation.sender.name }}"/>
-					{{ conversation.sender.name }}
-					<span class="status">
+					<span class="conversation-content">
+						<span class="conversation-name">{{ conversation.sender.name }}</span><br>
+						<span class="conversation-last-message">{{ lastMessage(conversation) }}</span>
+					</span>
+					<span v-if="conversation.messages.length > 0" class="last-message-timestamp">
+					{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}
+					</span>
+					<span v-if="conversation.newMessage" class="status">
 						<i class="fa fa-circle">&nbsp;</i>
 					</span>
 				</div>
@@ -45,12 +60,12 @@ export default {
 			 twoWay: true
 		},
 		user: {
-			required: true
+			required: true,
+			twoWay: true
 		}
 	},
 	data() {
 		return {
-			active: false,
 			apiToken: $('meta[name="api-token"]').attr('content')
 		};
 	},
@@ -60,27 +75,32 @@ export default {
 	computed: {
 		isSelected() {
 			return this.active;
-		}
+		},
 	},
 	methods: {
+		isActive(conversation) {
+			return conversation.active;
+		},
 		toggleActive(conversation) {
-			// reload the conversation and it's messages
-			this.$http.get('/api/v1/conversations/' + conversation.id, {
-				api_token: this.apiToken
-			}).then(function(response) {
-				conversation = response.data;
-				conversation.active = ! conversation.active;
-				this.$dispatch('activateConversation', conversation);
-				this.active = !this.active;
+			conversation.active = ! conversation.active;
+			console.log(conversation.active);
+			this.$dispatch('activateConversation', conversation);
+			// scroll message into view
+			setTimeout(function() {
+				document.querySelector('.Chatbox__content').scrollTop = 10000000;
+			}, 50);
+		},
+		lastMessage(conversation) {
+			// return the last message and the name of the sender or You said...
+			let lastMessageSent = conversation.messages[conversation.messages.length -1];
 
-				// scroll message into view
-				setTimeout(function() {
-					document.querySelector('.Chatbox__content').scrollTop = 10000000;
-				}, 50);
-			}, function(response){
-				// error callback
-				console.log('Failed to reload conversation', conversation);
-			});
+			// if we don't have a message, just return
+			if (lastMessageSent === undefined) return '';
+
+			// otherwise see if it's from the current user or not
+			return lastMessageSent.user.id === this.user.id ?
+				'You said ' + lastMessageSent.body.substr(0, 15) + '...' :
+				lastMessageSent.user.name + ' said ' + lastMessageSent.body.substr(0, 15) + '...'
 		}
 	}
 }
@@ -90,14 +110,14 @@ export default {
 	.Conversations {
 		position: fixed;
 		right: 0;
-		top: 58px;
+		top: 55px;
 		z-index: 0;
 		height: 100%;
 		min-height: 100%;
-		background: #fff;
+		background: #ffffff;
 		/*background: #e5e5e5;*/
 		/*min-width: 25em;*/
-		min-width: 235px;
+		min-width: 250px;
 
 		/* animated */
 		-webkit-animation-duration: 0.5s;
@@ -105,11 +125,23 @@ export default {
 	    -webkit-animation-fill-mode: both;
 	    animation-fill-mode: both;
 
-	    border-left: solid 1px #ccc;
+		border-left: 1px solid rgba(154, 159, 170, 0.3);
 	}
-
+	.conversations-title {
+		position: absolute;
+	    top: 0.25em;
+	    display: inline-block;
+	    padding-left: 0.25em;
+	}
+	.messages-icon {
+		background: url('../img/messages.svg') no-repeat;
+		width: 16px;
+	    height: 16px;
+	    display: inline-block;
+	    margin: 0.5em 0.25em 0 0.25em;
+	}
 	.Conversations header {
-		background: #273a6e;
+		background: #436790;
 		color: #fff;
 		position: relative;
 		clear: both;
@@ -141,11 +173,18 @@ export default {
 	.Conversations ul.list li {
 		position: relative;
 		padding: 0.5em 1em;
-		border-bottom: solid 1px #ddd;
+		border-bottom: solid 1px #F2F2F2;
 		cursor: pointer;
+		transition: all 0.35s ease;
+		color: #455e77;
 	}
+	.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {
+		background: #edf0f3;
+
+	}
+
 	.Conversations ul.list li:hover {
-		background: rgba(214, 213, 213, 0.67);
+		background: #edf0f3;
 	}
 
 	.Conversations ul li img {
@@ -153,16 +192,36 @@ export default {
 		height: 25px;
 		margin-right: 1em;
 		border: solid 1px #ddd;
+		float: left;
 	}
 
-	.Conversations ul li span {
-		position: absolute;
-		right: 1em;
-		top: 1em;
-		font-size: smaller;
+	.conversation-content {
+
 	}
-	.Conversations ul li span i {
-		color: #5cb85c;
+
+	.conversation-name {
+		font-weight: 600;
+		font-size: 0.875em;
+	}
+
+
+	.Conversations ul.list li:hover span.last-message-timestamp,
+	.Conversations ul.list li.active:hover span.last-message-timestamp,
+	.Conversations ul.list li.active span.last-message-timestamp {
+		color: #8793B8;
+	}
+	.conversation-last-message {
+		font-size: 0.775em;
+	}
+
+	.last-message-timestamp {
+		margin-right: 0.5em;
+		padding-left: 1em;
+		font-size: 0.775em;
+		color: #BFC0C3;
+		position: absolute;
+		right: 0.5em;
+		top: 0.5em;
 	}
 	@-webkit-keyframes slideInRight {
     from {

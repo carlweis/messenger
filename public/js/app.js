@@ -15931,6 +15931,7 @@ var _Chatbox2 = _interopRequireDefault(_Chatbox);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// let socket = io('http://192.168.10.10:3000');
 var socket = io('http://codedevise.com:3000');
 
 // import mixins
@@ -15946,10 +15947,8 @@ _vue2.default.transition('user-row', {
 
 // vue filters
 _vue2.default.filter('timeago', function (value, input) {
-	console.log(value);
 	var timeago = new Date(value);
 	timeago = (0, _moment2.default)(timeago).fromNow();
-	console.log('timeago', timeago);
 	return timeago;
 });
 
@@ -15975,20 +15974,36 @@ new _vue2.default({
 	ready: function ready() {
 		// socket setup
 		socket.on('chat.message', function (message) {
-			// add the message if it matches the active conversation_id
-			if (this.activeConversation.id === message.conversation_id) {
-				// play sms audio fx
-				var audio = document.createElement('audio');
-				audio.setAttribute('src', '/audio/sms.mp3');
-				audio.play();
-				audio = null;
+			// add the message if it matches the any of the users conversations
+			this.conversations.forEach(function (conversation) {
+				if (conversation.id === message.conversation_id) {
+					// play sms audio fx
+					var audio = document.createElement('audio');
+					audio.setAttribute('src', '/audio/sms.mp3');
+					audio.play();
+					audio = null;
 
-				this.activeConversation.messages.push(message);
-				// scroll message into view
-				setTimeout(function () {
-					document.querySelector('.Chatbox__content').scrollTop = 10000000;
-				}, 50);
-			}
+					conversation.messages.push(message);
+					// scroll message into view
+					setTimeout(function () {
+						document.querySelector('.Chatbox__content').scrollTop = 10000000;
+					}, 50);
+				}
+			});
+
+			// if (this.activeConversation.id === message.conversation_id) {
+			// 	// play sms audio fx
+			// 	let audio = document.createElement('audio');
+			// 	audio.setAttribute('src', '/audio/sms.mp3');
+			// 	audio.play();
+			// 	audio = null;
+
+			// 	this.activeConversation.messages.push(message);
+			// 	// scroll message into view
+			// 	setTimeout(function() {
+			// 		document.querySelector('.Chatbox__content').scrollTop = 10000000;
+			// 	}, 50);
+			// }
 		}.bind(this));
 
 		this.$http.get('/api/v1/users', { api_token: this.apiToken }).then(function (response) {
@@ -16015,10 +16030,16 @@ new _vue2.default({
 
 
 	events: {
-		messageSent: function messageSent(message) {
-			if (message) {
-				console.log('message received', message);
-				// this.activeConversation.messages.push(message);
+		messageSent: function messageSent(response) {
+			if (response.message) {
+				console.log('message received', response.message);
+				response.conversation.active = true;
+				response.conversation.newMessage = true;
+				response.conversation.lastMessage = this.lastMessage(response.conversation);
+				console.log('response ...', response.conversation.lastMessage);
+				this.activeConversation = response.conversation;
+
+				// this.activeConversation.messages.push(response.message);
 				// scroll message into view
 				setTimeout(function () {
 					document.querySelector('.Chatbox__content').scrollTop = 10000000;
@@ -16038,15 +16059,41 @@ new _vue2.default({
 		}
 	},
 	methods: {
+		lastMessage: function lastMessage(conversation) {
+			// return the last message and the name of the sender or You said...
+			var lastMessageSent = conversation.messages[conversation.messages.length - 1];
+
+			// if we don't have a message, just return
+			if (lastMessageSent === undefined) return '';
+
+			// otherwise see if it's from the current user or not
+			return lastMessageSent.user.id === this.user.id ? 'You said ' + lastMessageSent.body.substr(0, 25) + '...' : lastMessageSent.user.name + ' said ' + lastMessageSent.body.substr(0, 25) + '...';
+		},
 		activateConversation: function activateConversation(conversation) {
 			// reload the conversation and it's messages
 			this.$http.get('/api/v1/conversations/' + conversation.id, {
 				api_token: this.apiToken
 			}).then(function (response) {
 				conversation = response.data;
+				// deactivate all conversations
+				this.deactivateAllConversations();
+
 				conversation.active = true;
 				this.activeConversation = conversation;
 				this.showChatbox = true;
+
+				// get the conversations existing index in the collection
+				var conversation_index = this.conversations.map(function (obj, index) {
+					if (obj.id === conversation.id) {
+						return index;
+					}
+				}).filter(isFinite);
+
+				// remove from the conversations and re-add
+				this.conversations = this.conversations.filter(function (convo) {
+					return convo.id !== conversation.id;
+				});
+				this.conversations.splice(conversation_index, 0, conversation);
 
 				// maximize chatbox
 				document.querySelector('.Chatbox').classList.add('maximize');
@@ -16063,6 +16110,11 @@ new _vue2.default({
 			}, function (response) {
 				// error callback
 				console.log('Failed to reload conversation', conversation);
+			});
+		},
+		deactivateAllConversations: function deactivateAllConversations() {
+			this.conversations.forEach(function (conversation) {
+				conversation.active = false;
 			});
 		},
 		startConversation: function startConversation(sid, rid) {
@@ -16103,7 +16155,7 @@ new _vue2.default({
 });
 
 },{"./components/Chatbox.vue":31,"./components/Conversations.vue":32,"./components/UserDirectory.vue":33,"moment":1,"vue":28,"vue-resource":17}],31:[function(require,module,exports){
-var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Chatbox {\n\t\tposition: fixed;\n\t\tbottom: 0;\n\t\tmargin-left: 1em;\n\t\twidth: 280px;\n\t\tright: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t}\n\t.Chatbox__expanded {\n\t\t-webkit-transition: all .5s ease-in-out;\n\t\ttransition: all .5s ease-in-out;\n\t\t-webkit-transform: scale(1.4);\n\t\t        transform: scale(1.4);\n\t\twidth: 600px;\n\t\theight: 600px;\n\t}\n\t.Chatbox:nth-child(0) {\n\t\tright: 250px;\n\t}\n\t.Chatbox:nth-child(1) {\n\t\tright: 500px !important;\n\t}\n\t.Chatbox:nth-child(2) {\n\t\tright: 750px !important;\n\t}\n\t.Chatbox:nth-child(3) {\n\t\tright: 1000px !important;\n\t}\n\t.Chatbox header {\n\t\tbackground: #4c4c4c;\n\t    color: white;\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    border-right: 1px solid rgba(85, 85, 85, 0.87);\n\t    border-left: 1px solid rgba(85, 85, 85, 0.87);\n\n\t}\n\t.Chatbox header nav  {\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.25em;\n\t}\n\t.Chatbox header nav ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\t.Chatbox header nav ul li {\n\t\tdisplay: inline-block;\n\t\tmargin-left: 0.5em;\n\t}\n\t.Chatbox header nav ul li a {\n\t\tcolor: #fff;\n\t\tcursor: pointer;\n\t}\n\t.Chatbox header div.title {\n\t\tfont-size: 1em;\n    \tfont-weight: 700;\n\t}\n\t.Chatbox header div.title i.fa {\n\t\tcolor: #5cb85c;\n\t\tfont-size: smaller;\n\t\tmargin-right: 0.5em;\n\t}\n\t.Chatbox__content {\n\t\tfont-family: arial, sans-serif;\n\t    /*height: 280px;\n\t    width: 280px;*/\n\t    height: 280px;\n\t    width: 280px;\n\t    overflow-y: auto;\n\t    padding: 7px;\n\t    border-left: 1px solid #cccccc;\n\t    border-right: 1px solid #cccccc;\n\t    border-bottom: 1px solid #eeeeee;\n\t    background: #e5e5e5;\n\t    line-height: 1.3em;\n\t    list-style: none;\n\t}\n\n\t.Chatbox__content li {\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    display: -webkit-box;\n\t    display: -webkit-flex;\n\t    display: -ms-flexbox;\n\t    display: flex;\n\t}\n\n\t.Chatbox__content .avatar {\n\t    width: 40px;\n\t    position: relative;\n\t}\n\n\t.Chatbox__content .avatar img {\n\t    display: block;\n\t    width: 100%;\n\t}\n\n\t.other .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    top: 0;\n\t    right: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-left-color: transparent;\n\t    border-bottom-color: transparent;\n\t}\n\n\t.self {\n\t    -webkit-box-pack: end;\n\t    -webkit-justify-content: flex-end;\n\t        -ms-flex-pack: end;\n\t            justify-content: flex-end;\n\t    -webkit-box-align: end;\n\t    -webkit-align-items: flex-end;\n\t        -ms-flex-align: end;\n\t                -ms-grid-row-align: flex-end;\n\t            align-items: flex-end;\n\t}\n\n\t.self .chatboxmessagecontent {\n\t    -webkit-box-ordinal-group: 2;\n\t    -webkit-order: 1;\n\t        -ms-flex-order: 1;\n\t            order: 1;\n\t    border-bottom-right-radius: 0;\n\t}\n\n\t.self .avatar {\n\t    -webkit-box-ordinal-group: 3;\n\t    -webkit-order: 2;\n\t        -ms-flex-order: 2;\n\t            order: 2;\n\t}\n\n\t.self .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    bottom: 0;\n\t    left: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-right-color: transparent;\n\t    border-top-color: transparent;\n\t    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);\n\t}\n\n\t.chatboxmessagecontent {\n\t    background: white;\n\t    padding: 10px;\n\t    border-radius: 2px;\n\t    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);\n\t}\n\n\t.chatboxmessagecontent p {\n\t    font-size: 12px;\n\t    margin: 0 0 0.2rem 0;\n\t    -ms-word-break: break-all;\n\n\t    /* Non standard for webkit */\n\t    word-break: break-word;\n\n\t    -webkit-hyphens: auto;\n\t    -moz-hyphens: auto;\n\t    -ms-hyphens: auto;\n\t        hyphens: auto;\n\t}\n\n\t.chatboxmessagecontent time {\n\t    font-size: 9px;\n\t    color: #ccc;\n\t}\n\n\t.Chatbox__input {\n    padding: 5px;\n    background-color: #ffffff;\n    border-left: 1px solid #cccccc;\n    border-right: 1px solid #cccccc;\n    border-bottom: 1px solid #cccccc;\n}\n\n.Chatbox__input textarea {\n    width: 262px;\n    height: 44px;\n    padding: 3px 0pt 3px 3px;\n    border: 1px solid #eeeeee;\n    margin: 1px;\n    overflow: hidden;\n    resize: none !important;\n}\n\n.Chatbox__input textarea:focus {\n    border: solid 1px #eee;\n    margin: 0;\n    outline: none;\n}\n\n@-webkit-keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.chatbox-enter {\n  -webkit-animation-name: slideInUp;\n  animation-name: slideInUp;\n}\n\n@-webkit-keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n@keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n.chatbox-leave {\n  -webkit-animation-name: slideOutDown;\n  animation-name: slideOutDown;\n}\n\n/* minimize */\n@-webkit-keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n\n@keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n.minimize {\n  -webkit-animation-name: slideDown;\n  animation-name: slideDown;\n}\n\n/* maximize */\n@-webkit-keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n\n  }\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.maximize {\n  -webkit-animation-name: slideUp;\n  animation-name: slideUp;\n  /*transition: height 200ms;\n   height: 372px;*/\n}\n\n/* flash  */\n@-webkit-keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n@keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n.flash {\n  -webkit-animation-name: flash;\n  animation-name: flash;\n}\n\n")
+var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Chatbox {\n\t\tposition: fixed;\n\t\tbottom: 0;\n\t\tmargin-left: 1em;\n\t\twidth: 280px;\n\t\tright: 275px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder: 1px solid rgba(29, 49, 91, .3);\n\t\tborder-radius: 3px 3px 0 0;\n    \t/*box-shadow: 0 1px 1px rgba(0, 0, 0, .3);*/\n\t}\n\n\t.Chatbox__expanded {\n\t\t-webkit-transition: all .5s ease-in-out;\n\t\ttransition: all .5s ease-in-out;\n\t\t-webkit-transform: scale(1.4);\n\t\t        transform: scale(1.4);\n\t\twidth: 600px;\n\t\theight: 600px;\n\t}\n\t.Chatbox:nth-child(0) {\n\t\tright: 250px;\n\t}\n\t.Chatbox:nth-child(1) {\n\t\tright: 500px !important;\n\t}\n\t.Chatbox:nth-child(2) {\n\t\tright: 750px !important;\n\t}\n\t.Chatbox:nth-child(3) {\n\t\tright: 1000px !important;\n\t}\n\t.Chatbox header {\n\t    background-color: #436790;\n\t    color: white;\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    border-top: 1px solid rgb(62, 94, 131);\n\t    border-right: 1px solid rgb(62, 94, 131);\n\t    border-left: 1px solid rgb(62, 94, 131);\n\t}\n\n\t.Chatbox header nav  {\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.25em;\n\t}\n\t.Chatbox header nav ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\t.Chatbox header nav ul li {\n\t\tdisplay: inline-block;\n\t\tmargin-left: 0.5em;\n\t}\n\t.Chatbox header nav ul li a {\n\t\tcolor: #fff;\n\t\tcursor: pointer;\n\t}\n\t.Chatbox header div.title {\n\t\tfont-size: 1em;\n    \tfont-weight: 700;\n\t}\n\t.Chatbox header div.title i.fa {\n\t\tcolor: #5cb85c;\n\t\tfont-size: smaller;\n\t\tmargin-right: 0.5em;\n\t}\n\t.Chatbox__content {\n\t\tfont-family: arial, sans-serif;\n\t    /*height: 280px;\n\t    width: 280px;*/\n\t    height: 280px;\n\t    width: 100%;\n\t    overflow-y: auto;\n\t    padding: 7px;\n\t    background: #edf0f3;\n\t    line-height: 1.3em;\n\t    list-style: none;\n\t}\n\n\t.Chatbox__content li {\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    display: -webkit-box;\n\t    display: -webkit-flex;\n\t    display: -ms-flexbox;\n\t    display: flex;\n\t}\n\n\t.Chatbox__content .avatar {\n\t    width: 40px;\n\t    position: relative;\n\t}\n\n\t.Chatbox__content .avatar img {\n\t    display: block;\n\t    width: 100%;\n\t}\n\n\t.other .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    top: 0;\n\t    right: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-left-color: transparent;\n\t    border-bottom-color: transparent;\n\t}\n\n\t.self {\n\t    -webkit-box-pack: end;\n\t    -webkit-justify-content: flex-end;\n\t        -ms-flex-pack: end;\n\t            justify-content: flex-end;\n\t    -webkit-box-align: end;\n\t    -webkit-align-items: flex-end;\n\t        -ms-flex-align: end;\n\t                -ms-grid-row-align: flex-end;\n\t            align-items: flex-end;\n\t}\n\n\t.self .chatboxmessagecontent {\n\t    -webkit-box-ordinal-group: 2;\n\t    -webkit-order: 1;\n\t        -ms-flex-order: 1;\n\t            order: 1;\n\t    border-bottom-right-radius: 0;\n\t}\n\n\t.self .avatar {\n\t    -webkit-box-ordinal-group: 3;\n\t    -webkit-order: 2;\n\t        -ms-flex-order: 2;\n\t            order: 2;\n\t}\n\n\t.self .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    bottom: 0;\n\t    left: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-right-color: transparent;\n\t    border-top-color: transparent;\n\t    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);\n\t}\n\n\t.chatboxmessagecontent {\n\t    background: white;\n\t    padding: 10px;\n\t    border-radius: 2px;\n\t    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/\n\t}\n\n\t.chatboxmessagecontent p {\n\t    font-size: 12px;\n\t    margin: 0 0 0.2rem 0;\n\t    -ms-word-break: break-all;\n\n\t    /* Non standard for webkit */\n\t    word-break: break-word;\n\n\t    -webkit-hyphens: auto;\n\t    -moz-hyphens: auto;\n\t    -ms-hyphens: auto;\n\t        hyphens: auto;\n\t}\n\n\t.chatboxmessagecontent time {\n\t    font-size: 9px;\n\t    color: #ccc;\n\t}\n\n\t.Chatbox__input {\n    padding: 5px;\n    background-color: #ffffff;\n    border-top: 1px solid #cccccc;\n    /*border-left: 1px solid #cccccc;\n\n    border-bottom: 1px solid #cccccc;*/\n}\n\n.Chatbox__input textarea {\n    width: 262px;\n    height: 28px;\n    padding: 3px 0pt 3px 3px;\n    border: none;\n    overflow: hidden;\n    resize: none !important;\n}\n\n.Chatbox__input textarea:focus {\n    border: none;\n    margin: 0;\n    outline: none;\n}\n\n@-webkit-keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.chatbox-enter {\n  -webkit-animation-name: slideInUp;\n  animation-name: slideInUp;\n}\n\n@-webkit-keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n@keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n.chatbox-leave {\n  -webkit-animation-name: slideOutDown;\n  animation-name: slideOutDown;\n}\n\n/* minimize */\n@-webkit-keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n\n@keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n.minimize {\n  -webkit-animation-name: slideDown;\n  animation-name: slideDown;\n}\n\n/* maximize */\n@-webkit-keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n\n  }\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.maximize {\n  -webkit-animation-name: slideUp;\n  animation-name: slideUp;\n  /*transition: height 200ms;\n   height: 372px;*/\n}\n\n/* flash  */\n@-webkit-keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n@keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n.flash {\n  -webkit-animation-name: flash;\n  animation-name: flash;\n}\n\n")
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16111,11 +16163,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 
+// let socket = io('http://192.168.10.10:3000');
 var socket = io('http://codedevise.com:3000');
 exports.default = {
 	props: {
 		conversation: {
-			required: true
+			required: true,
+			twoWay: true
 		},
 		show: {
 			type: Boolean,
@@ -16123,7 +16177,10 @@ exports.default = {
 			twoWay: true,
 			default: true
 		},
-		user: {}
+		user: {
+			require: true,
+			twoWay: true
+		}
 	},
 	data: function data() {
 		return {
@@ -16131,7 +16188,6 @@ exports.default = {
 			apiToken: $('meta[name="api-token"]').attr('content')
 		};
 	},
-	// title: 'test'
 
 	computed: {
 		title: function title() {
@@ -16146,30 +16202,38 @@ exports.default = {
 		}
 	},
 	methods: {
-		send: function send() {
-			this.$http.post('/api/v1/messages', {
-				api_token: this.apiToken,
-				user_id: this.user.id,
-				conversation_id: this.conversation.id,
-				body: this.message
-			}).then(function (response) {
-				// push the message to the parent
-				this.$dispatch('messageSent', response.data.message);
+		send: function send(e) {
 
-				// emit the message to the chatserver
-				socket.emit('chat.message', response.data.message);
+			console.log('send event', e);
+			if (this.message.trim().length > 0 && !e.shiftKey) {
 
-				// clear the message input
-				this.message = '';
+				// replace newline in message with <br>
+				this.message = this.message.replace(/[\r\n]/g, "\n");
 
-				// scroll message into view
-				setTimeout(function () {
-					document.querySelector('.Chatbox__content').scrollTop = 10000000;
-				}, 50);
-			}, function (response) {
-				// error callback
-				console.log('Failed to send message', response);
-			}.bind(this));
+				this.$http.post('/api/v1/messages', {
+					api_token: this.apiToken,
+					user_id: this.user.id,
+					conversation_id: this.conversation.id,
+					body: this.message
+				}).then(function (response) {
+					// push the message to the parent
+					this.$dispatch('messageSent', { message: response.data.message, conversation: this.conversation });
+
+					// emit the message to the chatserver
+					socket.emit('chat.message', response.data.message);
+
+					// clear the message input
+					this.message = '';
+
+					// scroll message into view
+					setTimeout(function () {
+						document.querySelector('.Chatbox__content').scrollTop = 10000000;
+					}, 50);
+				}, function (response) {
+					// error callback
+					console.log('Failed to send message', response);
+				}.bind(this));
+			}
 		},
 		maximize: function maximize() {
 			// maximize chatbox
@@ -16218,14 +16282,14 @@ exports.default = {
 	}
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Chatbox\" transition=\"chatbox\" v-show=\"show\">\n\t<header>\n\t\t<div class=\"title\">\n\t\t\t<i class=\"fa fa-circle\"></i>\n\t\t\t{{ title }}\n\t\t</div>\n\t\t<nav>\n\t\t\t<ul>\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"minimize\"><i class=\"fa fa-minus\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t\t<!-- <li>\n\t\t\t\t\t<a @click=\"maximize\"><i class=\"fa fa-square-o\">&nbsp;</i></a>\n\t\t\t\t</li> -->\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"close\"><i class=\"fa fa-close\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</nav>\n\t</header>\n\t<div class=\"Chatbox__content\">\n\t\t<li v-for=\"message in conversation.messages\" track-by=\"$index\" v-bind:class=\"message.user.id === user.id ? 'self' : 'other'\">\n\t\t  <div class=\"avatar\">\n\t\t    <img v-bind:src=\"message.user.avatar\">\n\t\t  </div>\n\t\t  <div class=\"chatboxmessagecontent\">\n\t\t    <p>{{ message.body }}</p>\n\t\t    <time datetime=\"2016-05-07 03:11:31 UTC\" title=\"07 May  2016 at 03:11AM\">\n\t\t      {{ message.user.name }} • {{ message.created_at }}\n\t\t    </time>\n\t\t  </div>\n\n\t\t</li>\n\t</div>\n\t<div class=\"Chatbox__input\">\n\t\t<textarea v-model=\"message\" @keyup.enter=\"send\" placeholder=\"Enter a message...\" autofocus=\"true\"></textarea>\n\t</div>\n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Chatbox effect8\" transition=\"chatbox\" v-show=\"show\">\n\t<header>\n\t\t<div class=\"title\">\n\t\t\t<i class=\"fa fa-circle\"></i>\n\t\t\t{{ title }}\n\t\t</div>\n\t\t<nav>\n\t\t\t<ul>\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"minimize\"><i class=\"fa fa-minus\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t\t<!-- <li>\n\t\t\t\t\t<a @click=\"maximize\"><i class=\"fa fa-square-o\">&nbsp;</i></a>\n\t\t\t\t</li> -->\n\t\t\t\t<li>\n\t\t\t\t\t<a @click=\"close\"><i class=\"fa fa-close\">&nbsp;</i></a>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</nav>\n\t</header>\n\t<div class=\"Chatbox__content\">\n\t\t<li v-for=\"message in conversation.messages\" track-by=\"$index\" v-bind:class=\"message.user.id === user.id ? 'self' : 'other'\">\n\t\t  <div class=\"avatar\">\n\t\t    <img v-bind:src=\"message.user.avatar\">\n\t\t  </div>\n\t\t  <div class=\"chatboxmessagecontent\">\n\t\t    <p>{{ message.body }}</p>\n\t\t    <time datetime=\"{{ message.created_at }}\" title=\"{{ message.created_at }}\">\n\t\t      {{ message.user.name }} • {{ message.created_at | timeago }}\n\t\t    </time>\n\t\t  </div>\n\n\t\t</li>\n\t</div>\n\t<div class=\"Chatbox__input\">\n\t\t<textarea v-model=\"message\" @keyup.enter=\"send\" placeholder=\"Enter a message...\" autofocus=\"true\"></textarea>\n\t</div>\n</div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
   var id = "/Users/carl/Code/messenger/resources/assets/js/components/Chatbox.vue"
   module.hot.dispose(function () {
-    require("vueify-insert-css").cache["\n\t.Chatbox {\n\t\tposition: fixed;\n\t\tbottom: 0;\n\t\tmargin-left: 1em;\n\t\twidth: 280px;\n\t\tright: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t}\n\t.Chatbox__expanded {\n\t\t-webkit-transition: all .5s ease-in-out;\n\t\ttransition: all .5s ease-in-out;\n\t\t-webkit-transform: scale(1.4);\n\t\t        transform: scale(1.4);\n\t\twidth: 600px;\n\t\theight: 600px;\n\t}\n\t.Chatbox:nth-child(0) {\n\t\tright: 250px;\n\t}\n\t.Chatbox:nth-child(1) {\n\t\tright: 500px !important;\n\t}\n\t.Chatbox:nth-child(2) {\n\t\tright: 750px !important;\n\t}\n\t.Chatbox:nth-child(3) {\n\t\tright: 1000px !important;\n\t}\n\t.Chatbox header {\n\t\tbackground: #4c4c4c;\n\t    color: white;\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    border-right: 1px solid rgba(85, 85, 85, 0.87);\n\t    border-left: 1px solid rgba(85, 85, 85, 0.87);\n\n\t}\n\t.Chatbox header nav  {\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.25em;\n\t}\n\t.Chatbox header nav ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\t.Chatbox header nav ul li {\n\t\tdisplay: inline-block;\n\t\tmargin-left: 0.5em;\n\t}\n\t.Chatbox header nav ul li a {\n\t\tcolor: #fff;\n\t\tcursor: pointer;\n\t}\n\t.Chatbox header div.title {\n\t\tfont-size: 1em;\n    \tfont-weight: 700;\n\t}\n\t.Chatbox header div.title i.fa {\n\t\tcolor: #5cb85c;\n\t\tfont-size: smaller;\n\t\tmargin-right: 0.5em;\n\t}\n\t.Chatbox__content {\n\t\tfont-family: arial, sans-serif;\n\t    /*height: 280px;\n\t    width: 280px;*/\n\t    height: 280px;\n\t    width: 280px;\n\t    overflow-y: auto;\n\t    padding: 7px;\n\t    border-left: 1px solid #cccccc;\n\t    border-right: 1px solid #cccccc;\n\t    border-bottom: 1px solid #eeeeee;\n\t    background: #e5e5e5;\n\t    line-height: 1.3em;\n\t    list-style: none;\n\t}\n\n\t.Chatbox__content li {\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    display: -webkit-box;\n\t    display: -webkit-flex;\n\t    display: -ms-flexbox;\n\t    display: flex;\n\t}\n\n\t.Chatbox__content .avatar {\n\t    width: 40px;\n\t    position: relative;\n\t}\n\n\t.Chatbox__content .avatar img {\n\t    display: block;\n\t    width: 100%;\n\t}\n\n\t.other .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    top: 0;\n\t    right: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-left-color: transparent;\n\t    border-bottom-color: transparent;\n\t}\n\n\t.self {\n\t    -webkit-box-pack: end;\n\t    -webkit-justify-content: flex-end;\n\t        -ms-flex-pack: end;\n\t            justify-content: flex-end;\n\t    -webkit-box-align: end;\n\t    -webkit-align-items: flex-end;\n\t        -ms-flex-align: end;\n\t                -ms-grid-row-align: flex-end;\n\t            align-items: flex-end;\n\t}\n\n\t.self .chatboxmessagecontent {\n\t    -webkit-box-ordinal-group: 2;\n\t    -webkit-order: 1;\n\t        -ms-flex-order: 1;\n\t            order: 1;\n\t    border-bottom-right-radius: 0;\n\t}\n\n\t.self .avatar {\n\t    -webkit-box-ordinal-group: 3;\n\t    -webkit-order: 2;\n\t        -ms-flex-order: 2;\n\t            order: 2;\n\t}\n\n\t.self .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    bottom: 0;\n\t    left: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-right-color: transparent;\n\t    border-top-color: transparent;\n\t    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);\n\t}\n\n\t.chatboxmessagecontent {\n\t    background: white;\n\t    padding: 10px;\n\t    border-radius: 2px;\n\t    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);\n\t}\n\n\t.chatboxmessagecontent p {\n\t    font-size: 12px;\n\t    margin: 0 0 0.2rem 0;\n\t    -ms-word-break: break-all;\n\n\t    /* Non standard for webkit */\n\t    word-break: break-word;\n\n\t    -webkit-hyphens: auto;\n\t    -moz-hyphens: auto;\n\t    -ms-hyphens: auto;\n\t        hyphens: auto;\n\t}\n\n\t.chatboxmessagecontent time {\n\t    font-size: 9px;\n\t    color: #ccc;\n\t}\n\n\t.Chatbox__input {\n    padding: 5px;\n    background-color: #ffffff;\n    border-left: 1px solid #cccccc;\n    border-right: 1px solid #cccccc;\n    border-bottom: 1px solid #cccccc;\n}\n\n.Chatbox__input textarea {\n    width: 262px;\n    height: 44px;\n    padding: 3px 0pt 3px 3px;\n    border: 1px solid #eeeeee;\n    margin: 1px;\n    overflow: hidden;\n    resize: none !important;\n}\n\n.Chatbox__input textarea:focus {\n    border: solid 1px #eee;\n    margin: 0;\n    outline: none;\n}\n\n@-webkit-keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.chatbox-enter {\n  -webkit-animation-name: slideInUp;\n  animation-name: slideInUp;\n}\n\n@-webkit-keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n@keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n.chatbox-leave {\n  -webkit-animation-name: slideOutDown;\n  animation-name: slideOutDown;\n}\n\n/* minimize */\n@-webkit-keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n\n@keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n.minimize {\n  -webkit-animation-name: slideDown;\n  animation-name: slideDown;\n}\n\n/* maximize */\n@-webkit-keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n\n  }\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.maximize {\n  -webkit-animation-name: slideUp;\n  animation-name: slideUp;\n  /*transition: height 200ms;\n   height: 372px;*/\n}\n\n/* flash  */\n@-webkit-keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n@keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n.flash {\n  -webkit-animation-name: flash;\n  animation-name: flash;\n}\n\n"] = false
+    require("vueify-insert-css").cache["\n\t.Chatbox {\n\t\tposition: fixed;\n\t\tbottom: 0;\n\t\tmargin-left: 1em;\n\t\twidth: 280px;\n\t\tright: 275px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder: 1px solid rgba(29, 49, 91, .3);\n\t\tborder-radius: 3px 3px 0 0;\n    \t/*box-shadow: 0 1px 1px rgba(0, 0, 0, .3);*/\n\t}\n\n\t.Chatbox__expanded {\n\t\t-webkit-transition: all .5s ease-in-out;\n\t\ttransition: all .5s ease-in-out;\n\t\t-webkit-transform: scale(1.4);\n\t\t        transform: scale(1.4);\n\t\twidth: 600px;\n\t\theight: 600px;\n\t}\n\t.Chatbox:nth-child(0) {\n\t\tright: 250px;\n\t}\n\t.Chatbox:nth-child(1) {\n\t\tright: 500px !important;\n\t}\n\t.Chatbox:nth-child(2) {\n\t\tright: 750px !important;\n\t}\n\t.Chatbox:nth-child(3) {\n\t\tright: 1000px !important;\n\t}\n\t.Chatbox header {\n\t    background-color: #436790;\n\t    color: white;\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    border-top: 1px solid rgb(62, 94, 131);\n\t    border-right: 1px solid rgb(62, 94, 131);\n\t    border-left: 1px solid rgb(62, 94, 131);\n\t}\n\n\t.Chatbox header nav  {\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.25em;\n\t}\n\t.Chatbox header nav ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\t.Chatbox header nav ul li {\n\t\tdisplay: inline-block;\n\t\tmargin-left: 0.5em;\n\t}\n\t.Chatbox header nav ul li a {\n\t\tcolor: #fff;\n\t\tcursor: pointer;\n\t}\n\t.Chatbox header div.title {\n\t\tfont-size: 1em;\n    \tfont-weight: 700;\n\t}\n\t.Chatbox header div.title i.fa {\n\t\tcolor: #5cb85c;\n\t\tfont-size: smaller;\n\t\tmargin-right: 0.5em;\n\t}\n\t.Chatbox__content {\n\t\tfont-family: arial, sans-serif;\n\t    /*height: 280px;\n\t    width: 280px;*/\n\t    height: 280px;\n\t    width: 100%;\n\t    overflow-y: auto;\n\t    padding: 7px;\n\t    background: #edf0f3;\n\t    line-height: 1.3em;\n\t    list-style: none;\n\t}\n\n\t.Chatbox__content li {\n\t    padding: 0.5rem;\n\t    overflow: hidden;\n\t    display: -webkit-box;\n\t    display: -webkit-flex;\n\t    display: -ms-flexbox;\n\t    display: flex;\n\t}\n\n\t.Chatbox__content .avatar {\n\t    width: 40px;\n\t    position: relative;\n\t}\n\n\t.Chatbox__content .avatar img {\n\t    display: block;\n\t    width: 100%;\n\t}\n\n\t.other .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    top: 0;\n\t    right: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-left-color: transparent;\n\t    border-bottom-color: transparent;\n\t}\n\n\t.self {\n\t    -webkit-box-pack: end;\n\t    -webkit-justify-content: flex-end;\n\t        -ms-flex-pack: end;\n\t            justify-content: flex-end;\n\t    -webkit-box-align: end;\n\t    -webkit-align-items: flex-end;\n\t        -ms-flex-align: end;\n\t                -ms-grid-row-align: flex-end;\n\t            align-items: flex-end;\n\t}\n\n\t.self .chatboxmessagecontent {\n\t    -webkit-box-ordinal-group: 2;\n\t    -webkit-order: 1;\n\t        -ms-flex-order: 1;\n\t            order: 1;\n\t    border-bottom-right-radius: 0;\n\t}\n\n\t.self .avatar {\n\t    -webkit-box-ordinal-group: 3;\n\t    -webkit-order: 2;\n\t        -ms-flex-order: 2;\n\t            order: 2;\n\t}\n\n\t.self .avatar:after {\n\t    content: \"\";\n\t    position: absolute;\n\t    bottom: 0;\n\t    left: 0;\n\t    width: 0;\n\t    height: 0;\n\t    border: 5px solid white;\n\t    border-right-color: transparent;\n\t    border-top-color: transparent;\n\t    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);\n\t}\n\n\t.chatboxmessagecontent {\n\t    background: white;\n\t    padding: 10px;\n\t    border-radius: 2px;\n\t    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);*/\n\t}\n\n\t.chatboxmessagecontent p {\n\t    font-size: 12px;\n\t    margin: 0 0 0.2rem 0;\n\t    -ms-word-break: break-all;\n\n\t    /* Non standard for webkit */\n\t    word-break: break-word;\n\n\t    -webkit-hyphens: auto;\n\t    -moz-hyphens: auto;\n\t    -ms-hyphens: auto;\n\t        hyphens: auto;\n\t}\n\n\t.chatboxmessagecontent time {\n\t    font-size: 9px;\n\t    color: #ccc;\n\t}\n\n\t.Chatbox__input {\n    padding: 5px;\n    background-color: #ffffff;\n    border-top: 1px solid #cccccc;\n    /*border-left: 1px solid #cccccc;\n\n    border-bottom: 1px solid #cccccc;*/\n}\n\n.Chatbox__input textarea {\n    width: 262px;\n    height: 28px;\n    padding: 3px 0pt 3px 3px;\n    border: none;\n    overflow: hidden;\n    resize: none !important;\n}\n\n.Chatbox__input textarea:focus {\n    border: none;\n    margin: 0;\n    outline: none;\n}\n\n@-webkit-keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideInUp {\n  from {\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n    visibility: visible;\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.chatbox-enter {\n  -webkit-animation-name: slideInUp;\n  animation-name: slideInUp;\n}\n\n@-webkit-keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n@keyframes slideOutDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: hidden;\n    -webkit-transform: translate3d(0, 100%, 0);\n    transform: translate3d(0, 100%, 0);\n  }\n}\n\n.chatbox-leave {\n  -webkit-animation-name: slideOutDown;\n  animation-name: slideOutDown;\n}\n\n/* minimize */\n@-webkit-keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n\n@keyframes slideDown {\n  from {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n  to {\n    visibility: visible;\n    -webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n}\n.minimize {\n  -webkit-animation-name: slideDown;\n  animation-name: slideDown;\n}\n\n/* maximize */\n@-webkit-keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n  }\n\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n@keyframes slideUp {\n  from {\n  \t-webkit-transform: translate3d(0, 92%, 0);\n    transform: translate3d(0, 92%, 0);\n\n  }\n  to {\n    -webkit-transform: translate3d(0, 0, 0);\n    transform: translate3d(0, 0, 0);\n  }\n}\n\n.maximize {\n  -webkit-animation-name: slideUp;\n  animation-name: slideUp;\n  /*transition: height 200ms;\n   height: 372px;*/\n}\n\n/* flash  */\n@-webkit-keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n@keyframes flash {\n  from, 50%, to {\n    opacity: 1;\n  }\n\n  25%, 75% {\n    opacity: 0;\n  }\n}\n\n.flash {\n  -webkit-animation-name: flash;\n  animation-name: flash;\n}\n\n"] = false
     document.head.removeChild(__vueify_style__)
   })
   if (!module.hot.data) {
@@ -16235,7 +16299,7 @@ if (module.hot) {(function () {  module.hot.accept()
   }
 })()}
 },{"vue":28,"vue-hot-reload-api":3,"vueify-insert-css":29}],32:[function(require,module,exports){
-var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 58px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #fff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 235px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t    border-left: solid 1px #ccc;\n\t}\n\n\t.Conversations header {\n\t\tbackground: #273a6e;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #ddd;\n\t\tcursor: pointer;\n\t}\n\t.Conversations ul.list li:hover {\n\t\tbackground: rgba(214, 213, 213, 0.67);\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t}\n\n\t.Conversations ul li span {\n\t\tposition: absolute;\n\t\tright: 1em;\n\t\ttop: 1em;\n\t\tfont-size: smaller;\n\t}\n\t.Conversations ul li span i {\n\t\tcolor: #5cb85c;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n")
+var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 55px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #ffffff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder-left: 1px solid rgba(154, 159, 170, 0.3);\n\t}\n\t.conversations-title {\n\t\tposition: absolute;\n\t    top: 0.25em;\n\t    display: inline-block;\n\t    padding-left: 0.25em;\n\t}\n\t.messages-icon {\n\t\tbackground: url('../img/messages.svg') no-repeat;\n\t\twidth: 16px;\n\t    height: 16px;\n\t    display: inline-block;\n\t    margin: 0.5em 0.25em 0 0.25em;\n\t}\n\t.Conversations header {\n\t\tbackground: #436790;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #F2F2F2;\n\t\tcursor: pointer;\n\t\t-webkit-transition: all 0.35s ease;\n\t\ttransition: all 0.35s ease;\n\t\tcolor: #455e77;\n\t}\n\t.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {\n\t\tbackground: #edf0f3;\n\n\t}\n\n\t.Conversations ul.list li:hover {\n\t\tbackground: #edf0f3;\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t\tfloat: left;\n\t}\n\n\t.conversation-content {\n\n\t}\n\n\t.conversation-name {\n\t\tfont-weight: 600;\n\t\tfont-size: 0.875em;\n\t}\n\n\n\t.Conversations ul.list li:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active span.last-message-timestamp {\n\t\tcolor: #8793B8;\n\t}\n\t.conversation-last-message {\n\t\tfont-size: 0.775em;\n\t}\n\n\t.last-message-timestamp {\n\t\tmargin-right: 0.5em;\n\t\tpadding-left: 1em;\n\t\tfont-size: 0.775em;\n\t\tcolor: #BFC0C3;\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.5em;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n")
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16253,12 +16317,12 @@ exports.default = {
 			twoWay: true
 		},
 		user: {
-			required: true
+			required: true,
+			twoWay: true
 		}
 	},
 	data: function data() {
 		return {
-			active: false,
 			apiToken: $('meta[name="api-token"]').attr('content')
 		};
 	},
@@ -16270,36 +16334,39 @@ exports.default = {
 		}
 	},
 	methods: {
+		isActive: function isActive(conversation) {
+			return conversation.active;
+		},
 		toggleActive: function toggleActive(conversation) {
-			// reload the conversation and it's messages
-			this.$http.get('/api/v1/conversations/' + conversation.id, {
-				api_token: this.apiToken
-			}).then(function (response) {
-				conversation = response.data;
-				conversation.active = !conversation.active;
-				this.$dispatch('activateConversation', conversation);
-				this.active = !this.active;
+			conversation.active = !conversation.active;
+			console.log(conversation.active);
+			this.$dispatch('activateConversation', conversation);
+			// scroll message into view
+			setTimeout(function () {
+				document.querySelector('.Chatbox__content').scrollTop = 10000000;
+			}, 50);
+		},
+		lastMessage: function lastMessage(conversation) {
+			// return the last message and the name of the sender or You said...
+			var lastMessageSent = conversation.messages[conversation.messages.length - 1];
 
-				// scroll message into view
-				setTimeout(function () {
-					document.querySelector('.Chatbox__content').scrollTop = 10000000;
-				}, 50);
-			}, function (response) {
-				// error callback
-				console.log('Failed to reload conversation', conversation);
-			});
+			// if we don't have a message, just return
+			if (lastMessageSent === undefined) return '';
+
+			// otherwise see if it's from the current user or not
+			return lastMessageSent.user.id === this.user.id ? 'You said ' + lastMessageSent.body.substr(0, 15) + '...' : lastMessageSent.user.name + ' said ' + lastMessageSent.body.substr(0, 15) + '...';
 		}
 	}
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Conversations\" v-show=\"show\" transition=\"conversations\">\n\t<!-- <header>\n\t\t<div>\n\t\t\tConversations\n\t\t\t<nav>\n\t\t\t\t<ul>\n\t\t\t\t\t<li><i @click=\"show = false\" class=\"fa fa-close\">&nbsp;</i></li>\n\t\t\t\t</ul>\n\t\t\t</nav>\n\t\t</div>\n\n\t</header> -->\n\t<ul class=\"list\">\n\t\t<li v-for=\"conversation in conversations\" @click=\"toggleActive(conversation)\" class=\"{{ isSelected ? 'active' : '' }}\">\n\t\t\t<div v-if=\"conversation.sender_id === user.id\">\n\t\t\t\t<img v-bind:src=\"conversation.recipient.avatar\" alt=\"{{ conversation.recipient.name }}\">\n\t\t\t\t{{ conversation.recipient.name }}\n\t\t\t\t<span class=\"status\">\n\t\t\t\t\t<i class=\"fa fa-circle\">&nbsp;</i>\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t\t<div v-else=\"\">\n\t\t\t\t<img v-bind:src=\"conversation.sender.avatar\" alt=\"{{ conversation.sender.name }}\">\n\t\t\t\t{{ conversation.sender.name }}\n\t\t\t\t<span class=\"status\">\n\t\t\t\t\t<i class=\"fa fa-circle\">&nbsp;</i>\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</li>\n\t</ul>\n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Conversations\" v-show=\"show\" transition=\"conversations\">\n\t<header>\n\t\t<div>\n\t\t\t<i class=\"messages-icon\"></i>\n\t\t\t<span class=\"conversations-title\">Messages</span>\n\t\t\t<nav>\n\t\t\t\t<ul>\n\t\t\t\t\t<li><i @click=\"show = false\" class=\"fa fa-close\">&nbsp;</i></li>\n\t\t\t\t</ul>\n\t\t\t</nav>\n\t\t</div>\n\n\t</header>\n\t<ul class=\"list\">\n\t\t<li v-for=\"conversation in conversations\" @click=\"toggleActive(conversation)\" class=\"{{ isActive(conversation) ? 'active' : '' }}\">\n\t\t\t<div v-if=\"conversation.sender_id === user.id\">\n\t\t\t\t<img v-bind:src=\"conversation.recipient.avatar\" alt=\"{{ conversation.recipient.name }}\">\n\t\t\t\t<span class=\"conversation-content\">\n\t\t\t\t\t<span class=\"conversation-name\">{{ conversation.recipient.name }}</span><br>\n\t\t\t\t\t<span class=\"conversation-last-message\">{{ lastMessage(conversation) }}</span>\n\t\t\t\t</span>\n\t\t\t\t<span v-if=\"conversation.messages.length > 0\" class=\"last-message-timestamp\">\n\t\t\t\t{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}\n\t\t\t\t</span>\n\t\t\t\t<span v-else=\"\"><br></span>\n\n\t\t\t\t<span v-if=\"conversation.newMessage\" class=\"status\">\n\t\t\t\t\t<i class=\"fa fa-circle\">&nbsp;</i>\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t\t<div v-else=\"\">\n\t\t\t\t<img v-bind:src=\"conversation.sender.avatar\" alt=\"{{ conversation.sender.name }}\">\n\t\t\t\t<span class=\"conversation-content\">\n\t\t\t\t\t<span class=\"conversation-name\">{{ conversation.sender.name }}</span><br>\n\t\t\t\t\t<span class=\"conversation-last-message\">{{ lastMessage(conversation) }}</span>\n\t\t\t\t</span>\n\t\t\t\t<span v-if=\"conversation.messages.length > 0\" class=\"last-message-timestamp\">\n\t\t\t\t{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}\n\t\t\t\t</span>\n\t\t\t\t<span v-if=\"conversation.newMessage\" class=\"status\">\n\t\t\t\t\t<i class=\"fa fa-circle\">&nbsp;</i>\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</li>\n\t</ul>\n</div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
   var id = "/Users/carl/Code/messenger/resources/assets/js/components/Conversations.vue"
   module.hot.dispose(function () {
-    require("vueify-insert-css").cache["\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 58px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #fff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 235px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t    border-left: solid 1px #ccc;\n\t}\n\n\t.Conversations header {\n\t\tbackground: #273a6e;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #ddd;\n\t\tcursor: pointer;\n\t}\n\t.Conversations ul.list li:hover {\n\t\tbackground: rgba(214, 213, 213, 0.67);\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t}\n\n\t.Conversations ul li span {\n\t\tposition: absolute;\n\t\tright: 1em;\n\t\ttop: 1em;\n\t\tfont-size: smaller;\n\t}\n\t.Conversations ul li span i {\n\t\tcolor: #5cb85c;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n"] = false
+    require("vueify-insert-css").cache["\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 55px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #ffffff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder-left: 1px solid rgba(154, 159, 170, 0.3);\n\t}\n\t.conversations-title {\n\t\tposition: absolute;\n\t    top: 0.25em;\n\t    display: inline-block;\n\t    padding-left: 0.25em;\n\t}\n\t.messages-icon {\n\t\tbackground: url('../img/messages.svg') no-repeat;\n\t\twidth: 16px;\n\t    height: 16px;\n\t    display: inline-block;\n\t    margin: 0.5em 0.25em 0 0.25em;\n\t}\n\t.Conversations header {\n\t\tbackground: #436790;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #F2F2F2;\n\t\tcursor: pointer;\n\t\t-webkit-transition: all 0.35s ease;\n\t\ttransition: all 0.35s ease;\n\t\tcolor: #455e77;\n\t}\n\t.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {\n\t\tbackground: #edf0f3;\n\n\t}\n\n\t.Conversations ul.list li:hover {\n\t\tbackground: #edf0f3;\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t\tfloat: left;\n\t}\n\n\t.conversation-content {\n\n\t}\n\n\t.conversation-name {\n\t\tfont-weight: 600;\n\t\tfont-size: 0.875em;\n\t}\n\n\n\t.Conversations ul.list li:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active span.last-message-timestamp {\n\t\tcolor: #8793B8;\n\t}\n\t.conversation-last-message {\n\t\tfont-size: 0.775em;\n\t}\n\n\t.last-message-timestamp {\n\t\tmargin-right: 0.5em;\n\t\tpadding-left: 1em;\n\t\tfont-size: 0.775em;\n\t\tcolor: #BFC0C3;\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.5em;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n"] = false
     document.head.removeChild(__vueify_style__)
   })
   if (!module.hot.data) {

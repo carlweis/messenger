@@ -1,9 +1,10 @@
 $brand-primary: #3b5998;
-$navbar-default-bg: #252525;
+$navbar-default-bg: #1c262f;
+$navbar-default-border: #1c262f;
 $navbar-height: 50px;
 $navbar-margin-bottom: 0;
-$navbar-default-color: #252525;
-$navbar-default-link-color: #eee;
+$navbar-default-color: #a1b3c8;
+$navbar-default-link-color: #a1b3c8;
 $navbar-default-link-hover-color: #fff;
 $navbar-default-link-active-color: #fff;
 $navbar-default-brand-color: #fff;
@@ -12,10 +13,9 @@ $navbar-default-brand-hover-color: #fff;
 @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap/variables";
 @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
 @import "animate";
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800);
 
 html, body {
-	font-family: 'Open Sans', 'Helvetica', 'Arial', sans-serif;
+	font-family: helvetica, arial, sans-serif;
 }
 
 .navbar-brand {
@@ -24,14 +24,16 @@ html, body {
 
 }
 
-.navbar-default {
-    // background-image: url('../img/navbar.png');
-    box-shadow: 0 2px 2px -2px rgba(0, 0, 0, .82);
-    color: #252525;
-    max-height: 60px;
+.fa.fa-comments {
+	cursor: pointer;
 }
 
-.fa.fa-comments {
+.fa.fa-messages {
+	background: url('../img/messages.svg') no-repeat;
+	width: 16px;
+	height: 16px;
+	display: inline-block;
+
 	cursor: pointer;
 }
 .user-avatar {

@@ -24,13 +24,13 @@ class Message extends Model
     public function getCreatedAtAttribute($date)
 	{
 	    if(Auth::check())
-	        return Carbon::createFromFormat('Y-m-d H:i:s', $date)->copy()->tz(Auth::user()->timezone)->format('F j, Y @ g:i A');
+	        return Carbon::createFromFormat('Y-m-d H:i:s', $date)->copy()->tz(Auth::user()->timezone)->format('Y-m-d\TH:i:s\Z');
 	    else
-	        return Carbon::createFromFormat('Y-m-d H:i:s', $date)->copy()->tz('America/Chicago')->format('F j, Y @ g:i A');
+	        return Carbon::createFromFormat('Y-m-d H:i:s', $date)->copy()->tz('America/Chicago')->format('Y-m-d\TH:i:s\Z');
 	}
 
 	public function getUpdatedAtAttribute($date)
 	{
-	    return Carbon::createFromFormat('Y-m-d H:i:s', $date)->format('F j, Y @ g:i A');
+	    return Carbon::createFromFormat('Y-m-d H:i:s', $date)->format('Y-m-d\TH:i:s\Z');
 	}
 }

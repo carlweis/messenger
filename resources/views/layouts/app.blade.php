@@ -34,7 +34,7 @@
 
                 <!-- Branding Image -->
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    Messenger
+                    rumorslist
                 </a>
             </div>
 
@@ -62,7 +62,7 @@
                                 <li><a href="{{ url('/logout') }}">Sign Out</a></li>
                             </ul>
                         </li>
-                        <li><a @click="toggleConversations"><i class="fa fa-comments">&nbsp;</i></a></li>
+                        <li><a @click="toggleConversations"><i class="fa fa-messages">&nbsp;</i></a></li>
                     @endif
                 </ul>
             </div>
