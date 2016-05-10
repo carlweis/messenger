@@ -1,3 +1,5 @@
+@import url(https://fonts.googleapis.com/css?family=Lato:400,100,300,700,900);
+
 $brand-primary: #3b5998;
 $navbar-default-bg: #1c262f;
 $navbar-default-border: #1c262f;
@@ -15,7 +17,7 @@ $navbar-default-brand-hover-color: #fff;
 @import "animate";
 
 html, body {
-	font-family: helvetica, arial, sans-serif;
+	font-family: 'Lato', helvetica, arial, sans-serif;
 }
 
 .navbar-brand {

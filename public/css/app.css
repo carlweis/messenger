@@ -1,4 +1,5 @@
 @charset "UTF-8";
+@import url(https://fonts.googleapis.com/css?family=Lato:400,100,300,700,900);
 /*!
  * Bootstrap v3.3.6 (http://getbootstrap.com)
  * Copyright 2011-2015 Twitter, Inc.
@@ -8109,7 +8110,7 @@ button.close {
   animation-name: slideOutUp; }
 
 html, body {
-  font-family: helvetica, arial, sans-serif; }
+  font-family: 'Lato', helvetica, arial, sans-serif; }
 
 .navbar-brand {
   font-weight: bold;

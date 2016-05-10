@@ -10,40 +10,44 @@
 					</ul>
 				</nav>
 			</div>
-
 		</header>
-		<ul class="list">
-			<li v-for="conversation in conversations" @click="toggleActive(conversation)" class="{{ isActive(conversation) ? 'active' : '' }}">
-				<div v-if="conversation.sender_id === user.id">
-					<img v-bind:src="conversation.recipient.avatar" alt="{{ conversation.recipient.name }}"/>
-					<span class="conversation-content">
-						<span class="conversation-name">{{ conversation.recipient.name }}</span><br>
-						<span class="conversation-last-message">{{ lastMessage(conversation) }}</span>
-					</span>
-					<span v-if="conversation.messages.length > 0" class="last-message-timestamp">
-					{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}
-					</span>
-					<span v-else><br></span>
+		<div class="Conversations__filters">
+			<nav>
+				<ul>
+					<li class="active"><a @click="filterRecent">Recent</a></li>
+					<li><a @click="filterFavorites">Favorites</a></li>
+					<li><a @click="filterArchived">Archived</a></li>
+					<li><a @click="filterBlocked">Blocked</a></li>
+				</ul>
+			</nav>
+		</div>
+			<ul class="list">
+				<li v-for="conversation in conversations" @click="toggleActive(conversation)" class="{{ isActive(conversation) ? 'active' : '' }}">
+					<div v-if="conversation.sender_id === user.id">
+						<img v-bind:src="conversation.recipient.avatar" alt="{{ conversation.recipient.name }}"/>
+						<span class="conversation-content">
+							<span class="conversation-name">{{ conversation.recipient.name }}</span><br>
+							<span class="conversation-last-message">{{ lastMessage(conversation) }}</span>
+						</span>
+						<span v-if="conversation.messages.length > 0" class="last-message-timestamp">
+						{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}
+						</span>
+						<span v-else><br></span>
+					</div>
+					<div v-else>
+						<img v-bind:src="conversation.sender.avatar" alt="{{ conversation.sender.name }}"/>
+						<span class="conversation-content">
+							<span class="conversation-name">{{ conversation.sender.name }}</span><br>
+							<span class="conversation-last-message">{{ lastMessage(conversation) }}</span>
+						</span>
+						<span v-if="conversation.messages.length > 0" class="last-message-timestamp">
+						{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}
+						</span>
+						<span v-else><br></span>
+					</div>
+				</li>
+			</ul>
 
-					<span v-if="conversation.newMessage" class="status">
-						<i class="fa fa-circle">&nbsp;</i>
-					</span>
-				</div>
-				<div v-else>
-					<img v-bind:src="conversation.sender.avatar" alt="{{ conversation.sender.name }}"/>
-					<span class="conversation-content">
-						<span class="conversation-name">{{ conversation.sender.name }}</span><br>
-						<span class="conversation-last-message">{{ lastMessage(conversation) }}</span>
-					</span>
-					<span v-if="conversation.messages.length > 0" class="last-message-timestamp">
-					{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}
-					</span>
-					<span v-if="conversation.newMessage" class="status">
-						<i class="fa fa-circle">&nbsp;</i>
-					</span>
-				</div>
-			</li>
-		</ul>
 	</div>
 </template>
 
@@ -66,7 +70,10 @@ export default {
 	},
 	data() {
 		return {
-			apiToken: $('meta[name="api-token"]').attr('content')
+			apiToken: $('meta[name="api-token"]').attr('content'),
+			filters: [
+				{ name: 'Recent', }
+			]
 		};
 	},
 	ready() {
@@ -101,6 +108,18 @@ export default {
 			return lastMessageSent.user.id === this.user.id ?
 				'You said ' + lastMessageSent.body.substr(0, 15) + '...' :
 				lastMessageSent.user.name + ' said ' + lastMessageSent.body.substr(0, 15) + '...'
+		},
+		filterRecent() {
+
+		},
+		filterFavorites() {
+
+		},
+		filterArchived() {
+
+		},
+		filterBlocked() {
+
 		}
 	}
 }
@@ -164,10 +183,36 @@ export default {
 		cursor: pointer;
 	}
 
+	.Conversations__filters {
+		background: #E2E6EA;
+	}
+		.Conversations__filters nav ul li {
+			display: inline-block;
+			margin: 0.5em 0.25em;
+		}
+		.Conversations__filters nav ul li a {
+			padding: 0.25em 1em;
+			display: inline-block;
+			border: solid 1px #E2E6EA;
+			border-radius: 10px;
+			font-size: 0.875em;
+		}
+		.Conversations__filters nav ul li a:hover, .Conversations__filters nav ul li.active a {
+			border: solid 1px #fff;
+			background: #fff;
+			text-decoration: none;
+		}
+
+	.Conversations__body {
+		overflow: hidden;
+		max-height: 80%;
+	}
 	.Conversations ul {
 		list-style: none;
 		margin: 0;
 		padding: 0;
+		overflow: scroll;
+		max-height: 85%;
 	}
 
 	.Conversations ul.list li {
@@ -203,7 +248,6 @@ export default {
 		font-weight: 600;
 		font-size: 0.875em;
 	}
-
 
 	.Conversations ul.list li:hover span.last-message-timestamp,
 	.Conversations ul.list li.active:hover span.last-message-timestamp,

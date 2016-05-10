@@ -26,7 +26,7 @@ class ConversationsController extends Controller
 				['sender_id', '=', Auth::guard('api')->id()]
 			])->orWhere([
 				['recipient_id', '=', Auth::guard('api')->id()]
-			])->orderBy('created_at', 'desc')->get()
+			])->orderBy('created_at', 'asc')->get()
 		);
 	}
 

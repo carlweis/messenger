@@ -3,7 +3,7 @@
 		<header>
 			<div class="title">
 				<i class="fa fa-circle"></i>
-				{{ title }}
+				<span>{{ title }}</span>
 			</div>
 			<nav>
 				<ul>
@@ -167,7 +167,7 @@
 		bottom: 0;
 		margin-left: 1em;
 		width: 280px;
-		right: 275px;
+		right: 350px;
 
 		/* animated */
 		-webkit-animation-duration: 0.5s;
@@ -230,11 +230,22 @@
 	.Chatbox header div.title {
 		font-size: 1em;
     	font-weight: 700;
+    	height: 20px;
 	}
 	.Chatbox header div.title i.fa {
 		color: #5cb85c;
 		font-size: smaller;
 		margin-right: 0.5em;
+		position: absolute;
+		left: 0.5em;
+		top: 0.75em;
+		display: block;
+	}
+	.Chatbox header div.title span {
+		position: absolute;
+		left: 1.5em;
+		top: 0.25em;
+		display: block;
 	}
 	.Chatbox__content {
 		font-family: arial, sans-serif;
