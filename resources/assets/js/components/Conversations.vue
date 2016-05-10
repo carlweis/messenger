@@ -14,12 +14,15 @@
 		<div class="Conversations__filters">
 			<nav>
 				<ul>
-					<li class="active"><a @click="filterRecent">Recent</a></li>
-					<li><a @click="filterFavorites">Favorites</a></li>
-					<li><a @click="filterArchived">Archived</a></li>
-					<li><a @click="filterBlocked">Blocked</a></li>
+					<li class="active filter-recent"><a @click="filterRecent"><i class="fa fa-history"></i> Recent</a></li>
+					<li class="filter-favorites"><a @click="filterFavorites"><i class="fa fa-star"></i> Favorites</a></li>
+					<li class="filter-archived"><a @click="filterArchived"><i class="fa fa-archive"></i> Archived</a></li>
+					<li class="filter-blocked"><a @click="filterBlocked"><i class="fa fa-ban"></i> Blocked</a></li>
 				</ul>
 			</nav>
+		</div>
+		<div class="Conversations__search">
+			<input v-model="searchText" @keyup="search"  placeholder="Search conversations">
 		</div>
 			<ul class="list">
 				<li v-for="conversation in conversations" @click="toggleActive(conversation)" class="{{ isActive(conversation) ? 'active' : '' }}">
@@ -47,13 +50,16 @@
 					</div>
 				</li>
 			</ul>
-
 	</div>
 </template>
 
 <script>
 export default {
 	props: {
+		allConversations: {
+			require: true,
+			twoWay: true
+		},
 		conversations: {
 			require: true,
 			twoWay: true
@@ -71,9 +77,8 @@ export default {
 	data() {
 		return {
 			apiToken: $('meta[name="api-token"]').attr('content'),
-			filters: [
-				{ name: 'Recent', }
-			]
+			searchText: '',
+			currentFilter: 'recent'
 		};
 	},
 	ready() {
@@ -109,17 +114,95 @@ export default {
 				'You said ' + lastMessageSent.body.substr(0, 15) + '...' :
 				lastMessageSent.user.name + ' said ' + lastMessageSent.body.substr(0, 15) + '...'
 		},
-		filterRecent() {
+		search() {
+			// filter conversations by username
+			this.conversations = this.conversations.filter(function(conversation) {
+				console.log(conversation.sender.name);
+				console.log(conversation.recipient.name);
+				return conversation.sender.name.indexOf(this.searchText)  > -1 ||
+					   conversation.recipient.name.indexOf(this.searchText) > -1;
+			}.bind(this));
 
+			if (this.searchText.length === 0) {
+				this.filter();
+			}
+		},
+		clearSearch() {
+			this.searchText = '';
+			this.conversations = this.allConversations;
+		},
+		filter() {
+			switch(this.currentFilter) {
+				case 'recent':
+					this.filterRecent();
+					break;
+				case 'favorites':
+					this.filterFavorites();
+					break;
+				case 'archived':
+					this.filterArchived();
+					break;
+				case 'blocked':
+					this.filterBlocked();
+					break;
+			}
+		},
+		filterRecent() {
+			this.conversations = this.allConversations;
+			this.currentFilter = 'recent';
+			console.log(this.allConversations);
+			this.conversations = this.conversations.filter(function(conversation) {
+				return !conversation.favorite && !conversation.blocked && !conversation.archived;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-favorites').classList.remove('active');
+			document.querySelector('.filter-archived').classList.remove('active');
+			document.querySelector('.filter-blocked').classList.remove('active');
+			// add
+			document.querySelector('.filter-recent').classList.add('active');
 		},
 		filterFavorites() {
-
+			this.conversations = this.allConversations;
+			this.currentFilter = 'favorites';
+			this.conversations = this.conversations.filter(function(conversation) {
+				return conversation.favorite && !conversation.blocked && !conversation.archived;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-recent').classList.remove('active');
+			document.querySelector('.filter-archived').classList.remove('active');
+			document.querySelector('.filter-blocked').classList.remove('active');
+			// add
+			document.querySelector('.filter-favorites').classList.add('active');
 		},
 		filterArchived() {
-
+			this.conversations = this.allConversations;
+			this.currentFilter = 'archived';
+			this.conversations = this.conversations.filter(function(conversation) {
+				return !conversation.blocked && conversation.archived;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-favorites').classList.remove('active');
+			document.querySelector('.filter-recent').classList.remove('active');
+			document.querySelector('.filter-blocked').classList.remove('active');
+			// add
+			document.querySelector('.filter-archived').classList.add('active');
 		},
 		filterBlocked() {
-
+			this.conversations = this.allConversations;
+			this.currentFilter = 'blocked';
+			this.conversations = this.conversations.filter(function(conversation) {
+				return conversation.blocked;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-favorites').classList.remove('active');
+			document.querySelector('.filter-archived').classList.remove('active');
+			document.querySelector('.filter-recent').classList.remove('active');
+			// add
+			document.querySelector('.filter-blocked').classList.add('active');
 		}
 	}
 }
@@ -196,13 +279,26 @@ export default {
 			border: solid 1px #E2E6EA;
 			border-radius: 10px;
 			font-size: 0.875em;
+			cursor: pointer;
+			transition: all 0.5s ease;
 		}
 		.Conversations__filters nav ul li a:hover, .Conversations__filters nav ul li.active a {
 			border: solid 1px #fff;
 			background: #fff;
 			text-decoration: none;
 		}
-
+	.Conversations__search {
+		border-bottom: solid 1px #E2E6EA;
+	}
+	.Conversations__search input {
+		width: 100%;
+		height: 35px;
+		border: none;
+		padding: 0.25em 0.5em;
+	}
+	.Conversations__search input:focus {
+		outline: none;
+	}
 	.Conversations__body {
 		overflow: hidden;
 		max-height: 80%;

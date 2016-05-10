@@ -15965,6 +15965,7 @@ new _vue2.default({
 		apiToken: $('meta[name="api-token"]').attr('content'),
 		user: {},
 		users: [],
+		allConversations: [],
 		conversations: [],
 		activeConversation: {},
 		showConversations: true,
@@ -16140,6 +16141,7 @@ new _vue2.default({
 			this.$http.get('/api/v1/conversations', { api_token: this.apiToken }).then(function (response) {
 				// add the conversations
 				this.conversations = response.data;
+				this.allConversations = response.data;
 
 				// set the active conversation
 				this.activeConversation = this.conversations[0];
@@ -16299,7 +16301,7 @@ if (module.hot) {(function () {  module.hot.accept()
   }
 })()}
 },{"vue":28,"vue-hot-reload-api":3,"vueify-insert-css":29}],32:[function(require,module,exports){
-var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 55px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #ffffff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder-left: 1px solid rgba(154, 159, 170, 0.3);\n\t}\n\t.conversations-title {\n\t\tposition: absolute;\n\t    top: 0.25em;\n\t    display: inline-block;\n\t    padding-left: 0.25em;\n\t}\n\t.messages-icon {\n\t\tbackground: url('../img/messages.svg') no-repeat;\n\t\twidth: 16px;\n\t    height: 16px;\n\t    display: inline-block;\n\t    margin: 0.5em 0.25em 0 0.25em;\n\t}\n\t.Conversations header {\n\t\tbackground: #436790;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations__filters {\n\t\tbackground: #E2E6EA;\n\t}\n\t\t.Conversations__filters nav ul li {\n\t\t\tdisplay: inline-block;\n\t\t\tmargin: 0.5em 0.25em;\n\t\t}\n\t\t.Conversations__filters nav ul li a {\n\t\t\tpadding: 0.25em 1em;\n\t\t\tdisplay: inline-block;\n\t\t\tborder: solid 1px #E2E6EA;\n\t\t\tborder-radius: 10px;\n\t\t\tfont-size: 0.875em;\n\t\t}\n\t\t.Conversations__filters nav ul li a:hover, .Conversations__filters nav ul li.active a {\n\t\t\tborder: solid 1px #fff;\n\t\t\tbackground: #fff;\n\t\t\ttext-decoration: none;\n\t\t}\n\n\t.Conversations__body {\n\t\toverflow: hidden;\n\t\tmax-height: 80%;\n\t}\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t\toverflow: scroll;\n\t\tmax-height: 85%;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #F2F2F2;\n\t\tcursor: pointer;\n\t\t-webkit-transition: all 0.35s ease;\n\t\ttransition: all 0.35s ease;\n\t\tcolor: #455e77;\n\t}\n\t.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {\n\t\tbackground: #edf0f3;\n\n\t}\n\n\t.Conversations ul.list li:hover {\n\t\tbackground: #edf0f3;\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t\tfloat: left;\n\t}\n\n\t.conversation-content {\n\n\t}\n\n\t.conversation-name {\n\t\tfont-weight: 600;\n\t\tfont-size: 0.875em;\n\t}\n\n\t.Conversations ul.list li:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active span.last-message-timestamp {\n\t\tcolor: #8793B8;\n\t}\n\t.conversation-last-message {\n\t\tfont-size: 0.775em;\n\t}\n\n\t.last-message-timestamp {\n\t\tmargin-right: 0.5em;\n\t\tpadding-left: 1em;\n\t\tfont-size: 0.775em;\n\t\tcolor: #BFC0C3;\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.5em;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n")
+var __vueify_style__ = require("vueify-insert-css").insert("\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 55px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #ffffff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder-left: 1px solid rgba(154, 159, 170, 0.3);\n\t}\n\t.conversations-title {\n\t\tposition: absolute;\n\t    top: 0.25em;\n\t    display: inline-block;\n\t    padding-left: 0.25em;\n\t}\n\t.messages-icon {\n\t\tbackground: url('../img/messages.svg') no-repeat;\n\t\twidth: 16px;\n\t    height: 16px;\n\t    display: inline-block;\n\t    margin: 0.5em 0.25em 0 0.25em;\n\t}\n\t.Conversations header {\n\t\tbackground: #436790;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations__filters {\n\t\tbackground: #E2E6EA;\n\t}\n\t\t.Conversations__filters nav ul li {\n\t\t\tdisplay: inline-block;\n\t\t\tmargin: 0.5em 0.25em;\n\t\t}\n\t\t.Conversations__filters nav ul li a {\n\t\t\tpadding: 0.25em 1em;\n\t\t\tdisplay: inline-block;\n\t\t\tborder: solid 1px #E2E6EA;\n\t\t\tborder-radius: 10px;\n\t\t\tfont-size: 0.875em;\n\t\t\tcursor: pointer;\n\t\t\t-webkit-transition: all 0.5s ease;\n\t\t\ttransition: all 0.5s ease;\n\t\t}\n\t\t.Conversations__filters nav ul li a:hover, .Conversations__filters nav ul li.active a {\n\t\t\tborder: solid 1px #fff;\n\t\t\tbackground: #fff;\n\t\t\ttext-decoration: none;\n\t\t}\n\t.Conversations__search {\n\t\tborder-bottom: solid 1px #E2E6EA;\n\t}\n\t.Conversations__search input {\n\t\twidth: 100%;\n\t\theight: 35px;\n\t\tborder: none;\n\t\tpadding: 0.25em 0.5em;\n\t}\n\t.Conversations__search input:focus {\n\t\toutline: none;\n\t}\n\t.Conversations__body {\n\t\toverflow: hidden;\n\t\tmax-height: 80%;\n\t}\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t\toverflow: scroll;\n\t\tmax-height: 85%;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #F2F2F2;\n\t\tcursor: pointer;\n\t\t-webkit-transition: all 0.35s ease;\n\t\ttransition: all 0.35s ease;\n\t\tcolor: #455e77;\n\t}\n\t.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {\n\t\tbackground: #edf0f3;\n\n\t}\n\n\t.Conversations ul.list li:hover {\n\t\tbackground: #edf0f3;\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t\tfloat: left;\n\t}\n\n\t.conversation-content {\n\n\t}\n\n\t.conversation-name {\n\t\tfont-weight: 600;\n\t\tfont-size: 0.875em;\n\t}\n\n\t.Conversations ul.list li:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active span.last-message-timestamp {\n\t\tcolor: #8793B8;\n\t}\n\t.conversation-last-message {\n\t\tfont-size: 0.775em;\n\t}\n\n\t.last-message-timestamp {\n\t\tmargin-right: 0.5em;\n\t\tpadding-left: 1em;\n\t\tfont-size: 0.775em;\n\t\tcolor: #BFC0C3;\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.5em;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n")
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -16307,6 +16309,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = {
 	props: {
+		allConversations: {
+			require: true,
+			twoWay: true
+		},
 		conversations: {
 			require: true,
 			twoWay: true
@@ -16324,7 +16330,8 @@ exports.default = {
 	data: function data() {
 		return {
 			apiToken: $('meta[name="api-token"]').attr('content'),
-			filters: [{ name: 'Recent' }]
+			searchText: '',
+			currentFilter: 'recent'
 		};
 	},
 	ready: function ready() {},
@@ -16357,21 +16364,106 @@ exports.default = {
 			// otherwise see if it's from the current user or not
 			return lastMessageSent.user.id === this.user.id ? 'You said ' + lastMessageSent.body.substr(0, 15) + '...' : lastMessageSent.user.name + ' said ' + lastMessageSent.body.substr(0, 15) + '...';
 		},
-		filterRecent: function filterRecent() {},
-		filterFavorites: function filterFavorites() {},
-		filterArchived: function filterArchived() {},
-		filterBlocked: function filterBlocked() {}
+		search: function search() {
+			// filter conversations by username
+			this.conversations = this.conversations.filter(function (conversation) {
+				console.log(conversation.sender.name);
+				console.log(conversation.recipient.name);
+				return conversation.sender.name.indexOf(this.searchText) > -1 || conversation.recipient.name.indexOf(this.searchText) > -1;
+			}.bind(this));
+
+			if (this.searchText.length === 0) {
+				this.filter();
+			}
+		},
+		clearSearch: function clearSearch() {
+			this.searchText = '';
+			this.conversations = this.allConversations;
+		},
+		filter: function filter() {
+			switch (this.currentFilter) {
+				case 'recent':
+					this.filterRecent();
+					break;
+				case 'favorites':
+					this.filterFavorites();
+					break;
+				case 'archived':
+					this.filterArchived();
+					break;
+				case 'blocked':
+					this.filterBlocked();
+					break;
+			}
+		},
+		filterRecent: function filterRecent() {
+			this.conversations = this.allConversations;
+			this.currentFilter = 'recent';
+			console.log(this.allConversations);
+			this.conversations = this.conversations.filter(function (conversation) {
+				return !conversation.favorite && !conversation.blocked && !conversation.archived;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-favorites').classList.remove('active');
+			document.querySelector('.filter-archived').classList.remove('active');
+			document.querySelector('.filter-blocked').classList.remove('active');
+			// add
+			document.querySelector('.filter-recent').classList.add('active');
+		},
+		filterFavorites: function filterFavorites() {
+			this.conversations = this.allConversations;
+			this.currentFilter = 'favorites';
+			this.conversations = this.conversations.filter(function (conversation) {
+				return conversation.favorite && !conversation.blocked && !conversation.archived;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-recent').classList.remove('active');
+			document.querySelector('.filter-archived').classList.remove('active');
+			document.querySelector('.filter-blocked').classList.remove('active');
+			// add
+			document.querySelector('.filter-favorites').classList.add('active');
+		},
+		filterArchived: function filterArchived() {
+			this.conversations = this.allConversations;
+			this.currentFilter = 'archived';
+			this.conversations = this.conversations.filter(function (conversation) {
+				return !conversation.blocked && conversation.archived;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-favorites').classList.remove('active');
+			document.querySelector('.filter-recent').classList.remove('active');
+			document.querySelector('.filter-blocked').classList.remove('active');
+			// add
+			document.querySelector('.filter-archived').classList.add('active');
+		},
+		filterBlocked: function filterBlocked() {
+			this.conversations = this.allConversations;
+			this.currentFilter = 'blocked';
+			this.conversations = this.conversations.filter(function (conversation) {
+				return conversation.blocked;
+			});
+			// toggle .active css class
+			// remove
+			document.querySelector('.filter-favorites').classList.remove('active');
+			document.querySelector('.filter-archived').classList.remove('active');
+			document.querySelector('.filter-recent').classList.remove('active');
+			// add
+			document.querySelector('.filter-blocked').classList.add('active');
+		}
 	}
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Conversations\" v-show=\"show\" transition=\"conversations\">\n\t<header>\n\t\t<div>\n\t\t\t<i class=\"messages-icon\"></i>\n\t\t\t<span class=\"conversations-title\">Messages</span>\n\t\t\t<nav>\n\t\t\t\t<ul>\n\t\t\t\t\t<li><i @click=\"show = false\" class=\"fa fa-close\">&nbsp;</i></li>\n\t\t\t\t</ul>\n\t\t\t</nav>\n\t\t</div>\n\t</header>\n\t<div class=\"Conversations__filters\">\n\t\t<nav>\n\t\t\t<ul>\n\t\t\t\t<li class=\"active\"><a @click=\"filterRecent\">Recent</a></li>\n\t\t\t\t<li><a @click=\"filterFavorites\">Favorites</a></li>\n\t\t\t\t<li><a @click=\"filterArchived\">Archived</a></li>\n\t\t\t\t<li><a @click=\"filterBlocked\">Blocked</a></li>\n\t\t\t</ul>\n\t\t</nav>\n\t</div>\n\t\t<ul class=\"list\">\n\t\t\t<li v-for=\"conversation in conversations\" @click=\"toggleActive(conversation)\" class=\"{{ isActive(conversation) ? 'active' : '' }}\">\n\t\t\t\t<div v-if=\"conversation.sender_id === user.id\">\n\t\t\t\t\t<img v-bind:src=\"conversation.recipient.avatar\" alt=\"{{ conversation.recipient.name }}\">\n\t\t\t\t\t<span class=\"conversation-content\">\n\t\t\t\t\t\t<span class=\"conversation-name\">{{ conversation.recipient.name }}</span><br>\n\t\t\t\t\t\t<span class=\"conversation-last-message\">{{ lastMessage(conversation) }}</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-if=\"conversation.messages.length > 0\" class=\"last-message-timestamp\">\n\t\t\t\t\t{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-else=\"\"><br></span>\n\t\t\t\t</div>\n\t\t\t\t<div v-else=\"\">\n\t\t\t\t\t<img v-bind:src=\"conversation.sender.avatar\" alt=\"{{ conversation.sender.name }}\">\n\t\t\t\t\t<span class=\"conversation-content\">\n\t\t\t\t\t\t<span class=\"conversation-name\">{{ conversation.sender.name }}</span><br>\n\t\t\t\t\t\t<span class=\"conversation-last-message\">{{ lastMessage(conversation) }}</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-if=\"conversation.messages.length > 0\" class=\"last-message-timestamp\">\n\t\t\t\t\t{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-else=\"\"><br></span>\n\t\t\t\t</div>\n\t\t\t</li>\n\t\t</ul>\n\n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"Conversations\" v-show=\"show\" transition=\"conversations\">\n\t<header>\n\t\t<div>\n\t\t\t<i class=\"messages-icon\"></i>\n\t\t\t<span class=\"conversations-title\">Messages</span>\n\t\t\t<nav>\n\t\t\t\t<ul>\n\t\t\t\t\t<li><i @click=\"show = false\" class=\"fa fa-close\">&nbsp;</i></li>\n\t\t\t\t</ul>\n\t\t\t</nav>\n\t\t</div>\n\t</header>\n\t<div class=\"Conversations__filters\">\n\t\t<nav>\n\t\t\t<ul>\n\t\t\t\t<li class=\"active filter-recent\"><a @click=\"filterRecent\"><i class=\"fa fa-history\"></i> Recent</a></li>\n\t\t\t\t<li class=\"filter-favorites\"><a @click=\"filterFavorites\"><i class=\"fa fa-star\"></i> Favorites</a></li>\n\t\t\t\t<li class=\"filter-archived\"><a @click=\"filterArchived\"><i class=\"fa fa-archive\"></i> Archived</a></li>\n\t\t\t\t<li class=\"filter-blocked\"><a @click=\"filterBlocked\"><i class=\"fa fa-ban\"></i> Blocked</a></li>\n\t\t\t</ul>\n\t\t</nav>\n\t</div>\n\t<div class=\"Conversations__search\">\n\t\t<input v-model=\"searchText\" @keyup=\"search\" placeholder=\"Search conversations\">\n\t</div>\n\t\t<ul class=\"list\">\n\t\t\t<li v-for=\"conversation in conversations\" @click=\"toggleActive(conversation)\" class=\"{{ isActive(conversation) ? 'active' : '' }}\">\n\t\t\t\t<div v-if=\"conversation.sender_id === user.id\">\n\t\t\t\t\t<img v-bind:src=\"conversation.recipient.avatar\" alt=\"{{ conversation.recipient.name }}\">\n\t\t\t\t\t<span class=\"conversation-content\">\n\t\t\t\t\t\t<span class=\"conversation-name\">{{ conversation.recipient.name }}</span><br>\n\t\t\t\t\t\t<span class=\"conversation-last-message\">{{ lastMessage(conversation) }}</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-if=\"conversation.messages.length > 0\" class=\"last-message-timestamp\">\n\t\t\t\t\t{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-else=\"\"><br></span>\n\t\t\t\t</div>\n\t\t\t\t<div v-else=\"\">\n\t\t\t\t\t<img v-bind:src=\"conversation.sender.avatar\" alt=\"{{ conversation.sender.name }}\">\n\t\t\t\t\t<span class=\"conversation-content\">\n\t\t\t\t\t\t<span class=\"conversation-name\">{{ conversation.sender.name }}</span><br>\n\t\t\t\t\t\t<span class=\"conversation-last-message\">{{ lastMessage(conversation) }}</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-if=\"conversation.messages.length > 0\" class=\"last-message-timestamp\">\n\t\t\t\t\t{{ conversation.messages[conversation.messages.length -1].created_at | timeago }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<span v-else=\"\"><br></span>\n\t\t\t\t</div>\n\t\t\t</li>\n\t\t</ul>\n</div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
   var id = "/Users/carl/Code/messenger/resources/assets/js/components/Conversations.vue"
   module.hot.dispose(function () {
-    require("vueify-insert-css").cache["\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 55px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #ffffff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder-left: 1px solid rgba(154, 159, 170, 0.3);\n\t}\n\t.conversations-title {\n\t\tposition: absolute;\n\t    top: 0.25em;\n\t    display: inline-block;\n\t    padding-left: 0.25em;\n\t}\n\t.messages-icon {\n\t\tbackground: url('../img/messages.svg') no-repeat;\n\t\twidth: 16px;\n\t    height: 16px;\n\t    display: inline-block;\n\t    margin: 0.5em 0.25em 0 0.25em;\n\t}\n\t.Conversations header {\n\t\tbackground: #436790;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations__filters {\n\t\tbackground: #E2E6EA;\n\t}\n\t\t.Conversations__filters nav ul li {\n\t\t\tdisplay: inline-block;\n\t\t\tmargin: 0.5em 0.25em;\n\t\t}\n\t\t.Conversations__filters nav ul li a {\n\t\t\tpadding: 0.25em 1em;\n\t\t\tdisplay: inline-block;\n\t\t\tborder: solid 1px #E2E6EA;\n\t\t\tborder-radius: 10px;\n\t\t\tfont-size: 0.875em;\n\t\t}\n\t\t.Conversations__filters nav ul li a:hover, .Conversations__filters nav ul li.active a {\n\t\t\tborder: solid 1px #fff;\n\t\t\tbackground: #fff;\n\t\t\ttext-decoration: none;\n\t\t}\n\n\t.Conversations__body {\n\t\toverflow: hidden;\n\t\tmax-height: 80%;\n\t}\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t\toverflow: scroll;\n\t\tmax-height: 85%;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #F2F2F2;\n\t\tcursor: pointer;\n\t\t-webkit-transition: all 0.35s ease;\n\t\ttransition: all 0.35s ease;\n\t\tcolor: #455e77;\n\t}\n\t.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {\n\t\tbackground: #edf0f3;\n\n\t}\n\n\t.Conversations ul.list li:hover {\n\t\tbackground: #edf0f3;\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t\tfloat: left;\n\t}\n\n\t.conversation-content {\n\n\t}\n\n\t.conversation-name {\n\t\tfont-weight: 600;\n\t\tfont-size: 0.875em;\n\t}\n\n\t.Conversations ul.list li:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active span.last-message-timestamp {\n\t\tcolor: #8793B8;\n\t}\n\t.conversation-last-message {\n\t\tfont-size: 0.775em;\n\t}\n\n\t.last-message-timestamp {\n\t\tmargin-right: 0.5em;\n\t\tpadding-left: 1em;\n\t\tfont-size: 0.775em;\n\t\tcolor: #BFC0C3;\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.5em;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n"] = false
+    require("vueify-insert-css").cache["\n\t.Conversations {\n\t\tposition: fixed;\n\t\tright: 0;\n\t\ttop: 55px;\n\t\tz-index: 0;\n\t\theight: 100%;\n\t\tmin-height: 100%;\n\t\tbackground: #ffffff;\n\t\t/*background: #e5e5e5;*/\n\t\t/*min-width: 25em;*/\n\t\tmin-width: 250px;\n\n\t\t/* animated */\n\t\t-webkit-animation-duration: 0.5s;\n\t    animation-duration: 0.5s;\n\t    -webkit-animation-fill-mode: both;\n\t    animation-fill-mode: both;\n\n\t\tborder-left: 1px solid rgba(154, 159, 170, 0.3);\n\t}\n\t.conversations-title {\n\t\tposition: absolute;\n\t    top: 0.25em;\n\t    display: inline-block;\n\t    padding-left: 0.25em;\n\t}\n\t.messages-icon {\n\t\tbackground: url('../img/messages.svg') no-repeat;\n\t\twidth: 16px;\n\t    height: 16px;\n\t    display: inline-block;\n\t    margin: 0.5em 0.25em 0 0.25em;\n\t}\n\t.Conversations header {\n\t\tbackground: #436790;\n\t\tcolor: #fff;\n\t\tposition: relative;\n\t\tclear: both;\n\t\tpadding: 0.25em 0;\n\t}\n\n\t.Conversations header div {\n\t\tposition: relative;\n\t\tpadding-left: 1em;\n\t\tfont-weight: 500;\n\t}\n\n\t.Conversations header div nav {\n\t\tposition: absolute;\n\t\tright: 0.25em;\n\t\ttop: 0;\n\t}\n\n\t.Conversations header div nav li  {\n\t\tcursor: pointer;\n\t}\n\n\t.Conversations__filters {\n\t\tbackground: #E2E6EA;\n\t}\n\t\t.Conversations__filters nav ul li {\n\t\t\tdisplay: inline-block;\n\t\t\tmargin: 0.5em 0.25em;\n\t\t}\n\t\t.Conversations__filters nav ul li a {\n\t\t\tpadding: 0.25em 1em;\n\t\t\tdisplay: inline-block;\n\t\t\tborder: solid 1px #E2E6EA;\n\t\t\tborder-radius: 10px;\n\t\t\tfont-size: 0.875em;\n\t\t\tcursor: pointer;\n\t\t\t-webkit-transition: all 0.5s ease;\n\t\t\ttransition: all 0.5s ease;\n\t\t}\n\t\t.Conversations__filters nav ul li a:hover, .Conversations__filters nav ul li.active a {\n\t\t\tborder: solid 1px #fff;\n\t\t\tbackground: #fff;\n\t\t\ttext-decoration: none;\n\t\t}\n\t.Conversations__search {\n\t\tborder-bottom: solid 1px #E2E6EA;\n\t}\n\t.Conversations__search input {\n\t\twidth: 100%;\n\t\theight: 35px;\n\t\tborder: none;\n\t\tpadding: 0.25em 0.5em;\n\t}\n\t.Conversations__search input:focus {\n\t\toutline: none;\n\t}\n\t.Conversations__body {\n\t\toverflow: hidden;\n\t\tmax-height: 80%;\n\t}\n\t.Conversations ul {\n\t\tlist-style: none;\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t\toverflow: scroll;\n\t\tmax-height: 85%;\n\t}\n\n\t.Conversations ul.list li {\n\t\tposition: relative;\n\t\tpadding: 0.5em 1em;\n\t\tborder-bottom: solid 1px #F2F2F2;\n\t\tcursor: pointer;\n\t\t-webkit-transition: all 0.35s ease;\n\t\ttransition: all 0.35s ease;\n\t\tcolor: #455e77;\n\t}\n\t.Conversations ul.list li.active, .Conversations ul.list li.active:hover  {\n\t\tbackground: #edf0f3;\n\n\t}\n\n\t.Conversations ul.list li:hover {\n\t\tbackground: #edf0f3;\n\t}\n\n\t.Conversations ul li img {\n\t\twidth: 25px;\n\t\theight: 25px;\n\t\tmargin-right: 1em;\n\t\tborder: solid 1px #ddd;\n\t\tfloat: left;\n\t}\n\n\t.conversation-content {\n\n\t}\n\n\t.conversation-name {\n\t\tfont-weight: 600;\n\t\tfont-size: 0.875em;\n\t}\n\n\t.Conversations ul.list li:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active:hover span.last-message-timestamp,\n\t.Conversations ul.list li.active span.last-message-timestamp {\n\t\tcolor: #8793B8;\n\t}\n\t.conversation-last-message {\n\t\tfont-size: 0.775em;\n\t}\n\n\t.last-message-timestamp {\n\t\tmargin-right: 0.5em;\n\t\tpadding-left: 1em;\n\t\tfont-size: 0.775em;\n\t\tcolor: #BFC0C3;\n\t\tposition: absolute;\n\t\tright: 0.5em;\n\t\ttop: 0.5em;\n\t}\n\t@-webkit-keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n\n@keyframes slideInRight {\n    from {\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n        visibility: visible;\n    }\n\n    to {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n}\n.conversations-enter {\n\t-webkit-animation-name: slideInRight;\n    animation-name: slideInRight;\n}\n\n@-webkit-keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n@keyframes slideOutRight {\n    from {\n        -webkit-transform: translate3d(0, 0, 0);\n        transform: translate3d(0, 0, 0);\n    }\n\n    to {\n        visibility: hidden;\n        -webkit-transform: translate3d(100%, 0, 0);\n        transform: translate3d(100%, 0, 0);\n    }\n}\n\n.conversations-leave {\n\t-webkit-animation-name: slideOutRight;\n    animation-name: slideOutRight;\n}\n"] = false
     document.head.removeChild(__vueify_style__)
   })
   if (!module.hot.data) {

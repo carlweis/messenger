@@ -37,6 +37,7 @@ new Vue({
 		apiToken: $('meta[name="api-token"]').attr('content'),
 		user: {},
 		users: [],
+		allConversations: [],
 		conversations: [],
 		activeConversation: {},
 		showConversations: true,
@@ -215,6 +216,7 @@ new Vue({
 			this.$http.get('/api/v1/conversations', {api_token: this.apiToken}).then(function(response) {
 			// add the conversations
 			this.conversations = response.data;
+			this.allConversations = response.data;
 
 			// set the active conversation
 			this.activeConversation = this.conversations[0];

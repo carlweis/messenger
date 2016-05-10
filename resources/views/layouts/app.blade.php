@@ -74,6 +74,7 @@
     @if(Auth::check())
     <!-- conversations -->
     <conversations :show.sync="showConversations"
+                   :all-conversations.sync="allConversations"
                    :conversations.sync="conversations"
                    :user.sync="user">
    </conversations>
